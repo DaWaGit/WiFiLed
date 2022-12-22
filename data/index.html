@@ -1,0 +1,440 @@
+<!--
+  ColorPicker see: https://github.com/fujaru/jquery-wheelcolorpicker
+  ESP32 WebServer: https://randomnerdtutorials.com/esp32-web-server-spiffs-spi-flash-file-system/
+
+  Hamburger Menue: https://alvarotrigo.com/blog/hamburger-menu-css/
+                  https://codepen.io/erikterwan/pen/EVzeRP
+-->
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+  <head>
+    <title>WiFiLed-`id`</title>
+    <meta name="viewport" content="width=device-width, initial-scale=.9">
+    <meta http-equiv="content-type" content="text/html;charset=utf-8" />
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <script type="text/javascript" src="jquery-3.4.1.slim.min.js"></script>
+    <script type="text/javascript" src="jquery.wheelcolorpicker.min.js"></script>
+    <link type="text/css" rel="stylesheet" href="wheelcolorpicker.css" />
+    <link type="text/css" rel="stylesheet" href="ToggleSwitch.css" />
+    <style>
+      body, html{
+        height:100%;
+        width:100%;
+      }
+      body {
+        background-color:#333333;
+        color: #ffffff;
+        font-family: Arial;
+        margin-top:10px;
+        margin-bottom:10px;
+        margin-left:3px;
+        margin-right:3px;
+      }
+      .device-name {
+        font-family: Arial;
+        font-size  : 32px;
+        font-weight: bold;
+        text-align: left;
+        color: #ffffff;
+        width: 100%;
+        cursor: pointer;
+      }
+      .value-name {
+        font-family: Arial;
+        font-size  : 24px;
+        text-align: left;
+        color: #888888;
+        height: 40px;
+      }
+      .value {
+        font-family: monospace, Courier, 'Courier New';
+        font-size  : 24px;
+        text-align: right;
+        color: #888888;
+        height: 40px;
+      }
+      .config1 {
+        width: 350px;
+        /* width: 98%; */
+        background-color: #222222;
+        border-radius: 4px;
+        border: solid 1px #aaa;
+        padding: 5px;
+        z-index: 1001;
+      }
+      .config2 {
+        border-top-color: #070707;
+        border-left-color: #070707;
+        border-right-color: #aaa;
+        border-bottom-color: #aaa;
+        box-shadow: -1px -1px 1px #000;
+      }
+      .custom-select {
+        font-family: Arial;
+        font-size  : 24px;
+        text-align: left;
+        height: 40px;
+      }
+      .custom-select select {
+        background-color: #888888;
+        font-family: Arial;
+        font-size  : 24px;
+        text-align: left;
+        width: 100%;
+      }
+      input {
+        background-color: #888888;
+        font-family: Arial;
+        font-size  : 24px;
+        text-align: left;
+        width: 90%;
+      }
+    </style>
+    <script type="text/javascript">
+      var url = "`wsUrl`";
+      var boSendToDevice = true;
+      var hue = 0;
+      var sat = 0;
+      var bri = 0;
+      var reconnectTimer;
+
+      //#########################################
+      // This is called when the page finishes loading
+      function init() {
+        // enable the change event listener
+        document.getElementById('select').addEventListener('change', function handleChange(event) {
+          selectElement(event.target.value);
+        });
+        document.getElementById('colorMode').addEventListener('change', function handleChange(event) {
+          doSend("colorMode:" + event.target.value);
+        });
+        // select the initially elements
+        selectElement(document.getElementById('select').value);
+        // Connect to WebSocket server
+        wsConnect(url);
+      }
+      //#########################################
+      // select an element: color/wifi/...
+      function selectElement(element) {
+        document.getElementById('color').style.display = element === 'color' ? 'block' : 'none';
+        document.getElementById('wifi').style.display  = element === 'wifi'  ? 'block' : 'none';
+        document.getElementById('led').style.display   = element === 'led'   ? 'block' : 'none';
+        document.getElementById('setup').style.display = element === 'setup' ? 'block' : 'none';
+      }
+      //#########################################
+      // Call this to connect to the WebSocket server
+      function wsConnect(url) {
+        console.log("[WebSocket] Try a connection to " + url);
+        // Connect to WebSocket server
+        websocket = new WebSocket(url);
+        // Assign callbacks
+        websocket.onopen    = function (evt) { onOpen(evt) };
+        websocket.onclose   = function (evt) { onClose(evt) };
+        websocket.onmessage = function (evt) { onMessage(evt) };
+        websocket.onerror   = function (evt) { onError(evt) };
+      }
+      //#########################################
+      // Called when a WebSocket connection is established with the server
+      function onOpen(evt) {
+        // Log connection state
+        console.log("[WebSocket] Connected");
+        // clear timeout timer
+        clearInterval(reconnectTimer);
+        // Get the current state of the LED
+        doSend("get");
+      }
+      //#########################################
+      // Called when the WebSocket connection is closed
+      function onClose(evt) {
+        // Log disconnection state
+        console.log("[WebSocket] Disconnected");
+        // try to reconnect after a few seconds
+        reconnectTimer = setTimeout(function () { wsConnect(url) }, 1000);
+      }
+      //#########################################
+      // Called when a message is received from the server
+      function onMessage(evt) {
+        // Print out our received message
+        console.log("[WebSocket] Rx: " + evt.data);
+        //-----------------------------
+        // new color
+        var result = evt.data.match(/^sw:(\d+)h:(\d+)s:(\d+)b:(\d+)$/i);
+        if (result) {
+          boSendToDevice = false;
+          if (Number(result[1])) {
+            $("#StripeSwitch").prop('checked', true); // turn html switch on
+          } else {
+            $("#StripeSwitch").prop('checked', false); // turn html switch off
+          }
+          hue = Number(result[2]) / 0xffff;
+          sat = Number(result[3]) / 0xff;
+          bri = Number(result[4]) / 0xff;
+          $('#color-block').wheelColorPicker(
+            'setColor',
+            {
+              h: hue,
+              s: sat,
+              v: bri
+            }
+          );
+          return;
+        }
+        //-----------------------------
+        // new colorMode or new speed
+        result = evt.data.match(/^colorMode:(\d+)speed:(\d+)$/i);
+        if (result) {
+          $("#colorMode").prop('value', Number(result[1]));  // set colorMode
+          $("#speedValue").prop('value', Number(result[2])); // set speed
+          $(".speedValTxt").text(Math.round((100*Number(result[2]))/255)+"%");
+          return;
+        }
+        //-----------------------------
+        // enable/disable distance sensor
+        result = evt.data.match(/^dSens:(\d+)$/i);
+        if (result) {
+          boSendToDevice = false;
+          if (Number(result[1])) {
+            $("#DistanceSensorSwitch").prop('checked', true);
+            document.getElementById('calibrationBtn').disabled = false;
+          } else {
+            $("#DistanceSensorSwitch").prop('checked', false);
+            document.getElementById('calibrationBtn').disabled = true;
+          }
+          return;
+        }
+        //-----------------------------
+        // new brightness
+        result = evt.data.match(/^setB:(\d+)$/i);
+        if (result) {
+          boSendToDevice = false;
+          $('#color-block').wheelColorPicker(
+            'setColor',
+            {
+              h: $('#color-block').wheelColorPicker('color').h,
+              s: $('#color-block').wheelColorPicker('color').s,
+              v: Number(result[1]) / 0xff
+            }
+          );
+          return;
+        }
+      }
+      //#########################################
+      // Called when a WebSocket error occurs
+      function onError(evt) {
+        console.log("[WebSocket] Error: " + evt.data);
+      }
+      //#########################################
+      // Sends a message to the server (and prints it to the console)
+      function doSend(message) {
+        console.log("[WebSocket] Tx: " + message);
+        if (typeof websocket != "undefined") { websocket.send(message); }
+      }
+      //#########################################
+      function toggleLedStripe() {
+        if ($("#StripeSwitch").is(':checked')) {
+          doSend("on");
+        } else {
+          doSend("off");
+        }
+      }
+      //#########################################
+      function toggleDistanceSensor() {
+        if ($("#DistanceSensorSwitch").is(':checked')) {
+          doSend("dSens:1");
+          document.getElementById('calibrationBtn').disabled = false;
+        } else {
+          doSend("dSens:0");
+          document.getElementById('calibrationBtn').disabled = true;
+        }
+      }
+      //#########################################
+      function toggleTitle() {
+        if ($("#StripeSwitch").is(':checked')) {
+          $("#StripeSwitch").prop('checked', false); // turn html switch on
+          doSend("off");
+        } else {
+          $("#StripeSwitch").prop('checked', true); // turn html switch on
+          doSend("on");
+        }
+      }
+
+      // Call the init function as soon as the page loads
+      window.addEventListener("load", init, false);
+    </script>
+  </head>
+<!--##########################################-->
+  <body>
+    <table style="width:100%;height:100%;border-collapse:collapse;">
+      <tr><td align="center" style="vertical-align: top;">
+        <div class="config1 config2" style="display: inline-block;"">
+          <table style="width:100%; height: 30px; border-collapse: collapse;">
+            <tbody>
+              <tr>
+                <td class="device-name"><span onclick="toggleTitle()">WiFiLed-`id`</span></td>
+                <td><label class="switch"><input id="StripeSwitch" type="checkbox" onChange="toggleLedStripe()"><span class="slider round"></span></label></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <br>
+        <input id="color-block" type="text" value="#ffffff" data-wheelcolorpicker data-wcp-format="css"
+          data-wcp-layout="block" data-wcp-sliders="wv" data-wcp-cssClass="config1 config2" data-wcp-autoResize="false" />
+        <br>
+        <div class="config1 config2" style="display: inline-block;"">
+          <table style=" width:100%; height: 30px; border-collapse: collapse;">
+            <tbody>
+              <tr>
+                <td class="custom-select">
+                  <select name="select" id="select">
+                    <option value="color" selected="selected">Color mode</option>
+                    <option value="wifi">WiFi setup</option>
+                    <option value="led">LED setup</option>
+                    <option value="setup">Global Setup</option>
+                  </select>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="color" class="config1 config2" style="display: inline-block;"">
+          <table style="width:100%; height: 30px; border-collapse: collapse;">
+            <tbody>
+              <tr>
+                <td class="custom-select" colspan="2">
+                  <select name="colorMode" id="colorMode">
+                    <option value='0'>Monochome</option>
+                    <option value='1'>Rainbow</option>
+                    <option value='2'>Random</option>
+                    <option value='3'>MovingPoint</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td class="value-name" width="150px">Speed <span style="float:right" class="speedValTxt"></span></td><td class="value">
+                  <input id="speedValue" type="range" min="0" max="255" step="1.0" value="`speed`"
+                  onChange='doSend("speed:"+document.getElementById("speedValue").value); $(".speedValTxt").text(Math.round((100*document.getElementById("speedValue").value)/255)+"%");'>
+                </td>
+              </tr>
+              <tr>
+                <td class="value-name">RGB</td><td class="value"><span class="rgbValue"></span></td>
+              </tr>
+              <tr>
+                <td class="value-name">Hue</td><td class="value"><span class="hValue"></span></td>
+              </tr>
+              <tr>
+                <td class="value-name">Saturation</td><td class="value"><span class="sValue"></span></td style="text-align: right;">
+              </tr>
+              <tr>
+                <td class="value-name">Brightness</td><td class="value"><span class="bValue"></span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="wifi" class="config1 config2" style="display: inline-block;"">
+          <table style=" width:100%; height:30px; border-collapse: collapse;">
+            <tbody>
+              <tr>
+                <td class="value-name">SSID</td>
+                <td class="value"><input type="text" maxlength="49" placeholder="WiFi SSID" id="ssidValue" value="`ssid`"></td>
+              </tr>
+              <tr>
+                <td class="value-name">Password</td>
+                <td class="value"><input type="password" maxlength="49" placeholder="WiFi password" id="pwdValue" value="`pwd`"></td>
+              <tr>
+                <td class="value-name">&nbsp;</td><td class="value">&nbsp;</td>
+              </tr>
+              <tr>
+                <td class="value-name">&nbsp;</td><td class="value">&nbsp;</td>
+              </tr>
+              <tr>
+                <td class="value-name">&nbsp;</td><td class="value">&nbsp;</td>
+              </tr>
+              <tr>
+                <td class="value-name">&nbsp;</td><td class="value"><button class="btn"onclick='doSend("Ssid:"+document.getElementById("ssidValue").value+"Pwd:"+document.getElementById("pwdValue").value); alert("WiFiLed-`id` will now restart to connect to the configured SSID!");'>Success</button></td>
+              </tr>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="led" class="config1 config2" style="display: inline-block;"">
+          <table style=" width:100%; height:30px; border-collapse: collapse;">
+            <tbody>
+              <tr>
+                <td class="value-name" width="125px">LED's</td>
+                <td class="value"><input type="number" min="1" placeholder="number of LED's 1..300" id="ledCount" name="ledCount" value="`ledCount`"></td>
+              </tr>
+              <tr>
+                <td class="value-name">bright. min</td>
+                <td class="value"><input type="number" min="0" max="255" placeholder="0..255" id="bMin" name="bMin" value="`bMin`"></td>
+              <tr>
+                <td class="value-name">bright. max</td>
+                <td class="value"><input type="number" min="0" max="255" placeholder="0..255" id="bMax" name="bMax" value="`bMax`"></td>
+              </tr>
+              <tr>
+                <td class="value-name">off delay [s]</td>
+                <td class="value"><input type="number" min="4" max="255" placeholder="4..255" id="offDelay" name="offDelay" value="`offDelay`" onchange="if (Number(this.value)<4){this.value=4;}"></td>
+              </tr>
+              <tr>
+                <td class="value-name">&nbsp;</td><td class="value">&nbsp;</td>
+              </tr>
+              <tr>
+                <td class="value-name">&nbsp;</td><td class="value"><button class="btn" onclick='doSend("ledCount:"+document.getElementById("ledCount").value+"bMin:"+document.getElementById("bMin").value+"bMax:"+document.getElementById("bMax").value+"offDelay:"+(Number(document.getElementById("offDelay").value)-4));'>Success</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="setup" class="config1 config2" style="display: inline-block;"">
+          <table style=" width:100%; height:30px; border-collapse: collapse;">
+            <tbody>
+              <tr>
+                <td class="value-name" width="200px">distance sensor</td>
+                <td class="value"><label class="switch"><input id="DistanceSensorSwitch" type="checkbox" onChange="toggleDistanceSensor()"><span class="slider round"></span></label></td>
+              </tr>
+                <td class="value-name" width="200px">distance sensor</td>
+                <td class="value"><button id="calibrationBtn" class="btn" onmousedown='doSend("calib:1");' onmouseup='doSend("calib:0");'>calibrate</button></td>
+            </tr>
+            <tr>
+              <td class="value-name">&nbsp;</td><td class="value">&nbsp;</td>
+            </tr>
+            <tr>
+              <td class="value-name">&nbsp;</td><td class="value">&nbsp;</td>
+            </tr>
+            <tr>
+              <td class="value-name">&nbsp;</td><td class="value">&nbsp;</td>
+            </tr>
+            <tr>
+              <td class="value-name">factory reset</td>
+              <td class="value"><button class="btn" onclick='doSend("factoryReset"); alert("WiFiLed-`id` will now restart in WiFi AccessPoint mode!\n Connect your Wifi to this Accesspoint and configire SSID and Password!");'>start</button></td>
+            <tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="width: 360px;text-align: right;font-size: x-small; color:#888888">
+          WiFiLed-`id` V`ver` by Daniel Warnicki
+        </div>
+      </td></tr>
+    </table>
+    <script type="text/javascript">
+      //#########################################
+      $(function () {
+        $('#color-block').on('colorchange', function (e) {
+          var color = $(this).wheelColorPicker('value');
+          var h = $(this).wheelColorPicker('color').h;
+          var s = $(this).wheelColorPicker('color').s;
+          var v = $(this).wheelColorPicker('color').v;
+          $('.rgbValue').text(color);
+          $('.hValue').text(Math.round(h * 0xffff));
+          $('.sValue').text(Math.round(s * 100) + '%');
+          $('.bValue').text(Math.round(v * 100) + '%');
+          if (boSendToDevice) {
+            // change the Stripe color
+            doSend("set=h:" + (h * 0xffff).toFixed(0) + "s:"+ (s * 0xff).toFixed(0) + "b:" + (v * 0xff).toFixed(0));
+          } else {
+            // do not update the device values
+            boSendToDevice = true;
+          }
+        });
+      });
+    </script>
+  </body>
+</html>
