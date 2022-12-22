@@ -1,7 +1,7 @@
 // Project  : WiFiLed (control RGB LED stripe with WS2812 LED's via ESP32)
 // Author   : Daniel Warnicki 22.12.2022
 // GitHubUrl: https://github.com/DaWaGit/WiFiLed.git
-// Doc      :
+// Doc      : https://github.com/DaWaGit/WiFiLed/blob/main/README.md
 //
 // #############################################################################
 #define CLASS_NAME       "WiFiLed"

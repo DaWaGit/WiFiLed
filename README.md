@@ -1,30 +1,20 @@
 # WiFiLed
 
-With this project, you can control an WS2812 RGB LED stripe with up to 300 LEDs via your browser.<br>
+With this project, you can control an WS2812 RGB LED stripe (up to 300 LEDs) via your browser.<br>
 The following features are realized.
 
 * **browser control**<br>
-  The device provides a webpage where you can control the LED stripe (including siple animations).<br>
+  The device provides a webpage, where you can control the LED stripe (including simple animations).<br>
   ![screenshot](doc/screenshot.png)
+* **smooth on/off**<br>
+  The LEDs will be turned on and off smoothly via a PT1 damping
 * **optionally IR motion sensors**<br>
-  Connect optionally two IR motion sensors to activate light.
-  After a defined time the light will be disabled
+  Connect optionally two IR motion sensors to activate the LEDs by motion detection.
+  After a defined time the LEDs will be durned off.
 * **optionally IR distance sensors**<br>
-  Connect optionally an IR distance sensors to activate/deactivate the light without any physical contact to a switch or your browser.
-  * fast moving across the distance sensor turns the light on/off
+  Connect optionally an IR distance sensor to control on/oof and the brightness.
+  * fast moving across the distance sensor turns the LEDs on/off
   * static distance in front of the distance sensor changes the brightness
-
-
-
-
-
-* starting and WiFi Access Point (SSID: WiFiLed-\<DeviceId\>) and configure your SSID and password to connect the device with you WiFi network.
-* values for the Aaccesspoint mode
-  | name  | value                |
-  | ---- | ---------- |
-  | SSID | WiFiLed-\<DeviceId\> |
-  | Password | none |
-  | Url | http://192.168.1.4/ |
 
 ----
 ## Hardware
@@ -100,8 +90,14 @@ The following main devices are used in the schema:
 ## Getting Started
 When you turn on as first time, follow the next steps, to connect the device in your WiFi:
 
-1. The blue onboard LED is blinking slowly to inform you, a Wify-Access-Point was started.
-1. Search and connect your mobile device with an WiFi-Access-Point named **WiFiLed-\<DeviceId\>**
+1. The blue onboard LED is blinking slowly to inform you, a Wifi-Access-Point was started.
+1. Search and connect your mobile device with an WiFi-Access-Point named `WiFiLed-\<DeviceId\>`<br>
+   | name     | value                |
+   | -------- | -------------------- |
+   | SSID     | WiFiLed-\<DeviceId\> |
+   | Password | none                 |
+   | Url      | http://192.168.1.4/  |
+
 1. Open in your browser the page http://192.168.1.4/
 1. In **WiFi Setup** add your WiFi SSID and password and press **Success**
 1. The device starts new, but with a fast blinking onboard LED to inform you, the connection to your WiFi is trying
