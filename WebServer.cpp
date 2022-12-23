@@ -191,20 +191,7 @@ void WebServer::vWebSocketEvent(uint8_t clientNumber,
                 uint8_t u8NewBrightness = (uint8_t)sPayload.substring(start, end).toInt();
 
                 pLedStripe->vSetValues(u16NewHue, u8NewSaturation, u8NewBrightness);
-                if (pLedStripe->boGetSwitchStatus() && !pEep->u8Speed) {
-                    // when stripe is on and animation speed is zero
-                    // switch the current mode
-                    if ((tColorMode)pEep->u8ColorMode == nMonochrome) {
-                        pLedStripe->vSetMonochrome(u16NewHue, u8NewSaturation, u8NewBrightness);
-                    } else if ((tColorMode)pEep->u8ColorMode == nRainbow) {
-                        pLedStripe->vSetRainbow(u16NewHue, u8NewSaturation, u8NewBrightness);
-                    } else if ((tColorMode)pEep->u8ColorMode == nRandom) {
-                        pLedStripe->vSetRandom(u8NewSaturation, u8NewBrightness, true, pEep->u8Speed);
-                    } else {
-                        pLedStripe->vSetMovingPoint(u16NewHue, u8NewSaturation, u8NewBrightness, false);
-                    }
-                }
-                vSendStripeStatus(clientNumber, true); // update values for every client expect himself
+                pLedStripe->vSetColorMode((tColorMode)pEep->u8ColorMode);
             } else if (strstr((char *)payload, "ledCount")) {
                 // number of LEDs changed via web page
                 String sPayload = String((char *)payload);

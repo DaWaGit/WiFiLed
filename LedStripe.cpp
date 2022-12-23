@@ -69,15 +69,17 @@ uint8_t LedStripe::u8GetBrightness(){
 void LedStripe::vSetColorMode(tColorMode enNewColorMode){
     if ((uint8_t)enNewColorMode != pEep->u8ColorMode) {
         pEep->vSetColorMode((uint8_t)enNewColorMode, true);
-        if (boGetSwitchStatus() && !pEep->u8Speed) {
+        if (boGetSwitchStatus()) {
             // when stripe is on and animation speed us zero
             // switch the current mode
             if ((tColorMode)pEep->u8ColorMode == nMonochrome) {
                 vSetMonochrome(pEep->u16Hue, pEep->u8Saturation, pEep->u8Brightness);
             } else if ((tColorMode)pEep->u8ColorMode == nRainbow) {
                 vSetRainbow(pEep->u16Hue, pEep->u8Saturation, pEep->u8Brightness);
-            } else {
+            } else if ((tColorMode)pEep->u8ColorMode == nRandom) {
                 vSetRandom(pEep->u8Saturation, pEep->u8Brightness, true, pEep->u8Speed);
+            } else {
+                vSetMovingPoint(pEep->u16Hue, pEep->u8Saturation, pEep->u8Brightness, false);
             }
         }
         if (pWebServer)
