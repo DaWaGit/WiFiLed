@@ -192,12 +192,16 @@ void WebServer::vWebSocketEvent(uint8_t clientNumber,
 
                 pLedStripe->vSetValues(u16NewHue, u8NewSaturation, u8NewBrightness);
                 if (pLedStripe->boGetSwitchStatus() && !pEep->u8Speed) {
-                    // when stripe is on and animation speed us zero
+                    // when stripe is on and animation speed is zero
                     // switch the current mode
                     if ((tColorMode)pEep->u8ColorMode == nMonochrome) {
                         pLedStripe->vSetMonochrome(u16NewHue, u8NewSaturation, u8NewBrightness);
-                    } else {
+                    } else if ((tColorMode)pEep->u8ColorMode == nRainbow) {
                         pLedStripe->vSetRainbow(u16NewHue, u8NewSaturation, u8NewBrightness);
+                    } else if ((tColorMode)pEep->u8ColorMode == nRandom) {
+                        pLedStripe->vSetRandom(u8NewSaturation, u8NewBrightness, true, pEep->u8Speed);
+                    } else {
+                        pLedStripe->vSetMovingPoint(u16NewHue, u8NewSaturation, u8NewBrightness, false);
                     }
                 }
                 vSendStripeStatus(clientNumber, true); // update values for every client expect himself

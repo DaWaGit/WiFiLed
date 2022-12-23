@@ -191,14 +191,12 @@ void LedStripe::vSetRandom(
     uint8_t u8Speed)
 {
     static uint16_t aHue[300];
-    static uint8_t aDirection[300];
 
     for(int iLedCnt=0; iLedCnt < pEep->u16LedCount; iLedCnt++) {
         if (boInitNewColors) {
-            aHue[iLedCnt]       = random(0, 0xffff);
-            aDirection[iLedCnt] = random(0, 1);
+            aHue[iLedCnt] = random(0x0000, 0xffff);
         } else if (u8Speed) {
-            if (aDirection[iLedCnt]) {
+            if (iLedCnt & 0x0001) {
                 aHue[iLedCnt] += u8Speed;
             } else {
                 aHue[iLedCnt] -= u8Speed;
@@ -245,7 +243,7 @@ void LedStripe::vSetMovingPoint(
 //=============================================================================
 void LedStripe::vLoop() {
     static uint8_t u8DampedBrightness = 0;
-    static uint8_t u8SendCnt          = 0;
+    static uint16_t u16SendCnt        = 0;
 
     uint16_t u16Hue      = pEep->u16Hue;
     uint8_t u8Saturation = pEep->u8Saturation;
@@ -263,7 +261,7 @@ void LedStripe::vLoop() {
             vSetRandom(u8Saturation, u8Brightness, boInitRandomHue, pEep->u8Speed);
             boInitRandomHue = false;
         } else {
-            vSetMovingPoint(u16Hue, u8Saturation, u8Brightness, true);
+            vSetMovingPoint(u16Hue, u8Saturation, u8Brightness, false);
         }
         if (boNewSwitchMode) {
             if ((u8NewSwitchBrightness - 1) <= u8DampedBrightness) {
@@ -288,9 +286,9 @@ void LedStripe::vLoop() {
                 pEep->u16Hue   += (uint16_t)pEep->u8Speed;
                 u16Hue         = pEep->u16Hue;
                 vSetMonochrome(u16Hue, u8Saturation, u8Brightness);
-                if (++u8SendCnt > 25) {
+                if (++u16SendCnt > 25) {
                     // PATCH: Do not send each change, because web socket need time to send all.
-                    u8SendCnt = 0;
+                    u16SendCnt = 0;
                     if (pWebServer)
                         pWebServer->vSendStripeStatus(-1, true); // update values for every client
                 }
@@ -298,9 +296,9 @@ void LedStripe::vLoop() {
             case nRainbow: // draw a rainbow and shift/move the colors
                 pEep->u16Hue += (uint16_t)pEep->u8Speed;
                 vSetRainbow(pEep->u16Hue, u8Saturation, u8Brightness);
-                if (++u8SendCnt > 25) {
+                if (++u16SendCnt > 25) {
                     // PATCH: Do not send each change, because web socket need time to send all.
-                    u8SendCnt = 0;
+                    u16SendCnt = 0;
                     if (pWebServer)
                         pWebServer->vSendStripeStatus(-1, true); // update values for every client
                 }
@@ -310,11 +308,8 @@ void LedStripe::vLoop() {
                 break;
             case nMovingPoint: // change for each pixel color individually, but smooth
                 if (pEep->u8Speed) {
-                    if (++u8SendCnt > 255-pEep->u8Speed) {
-                        // PATCH: Do not send each change, because web socket need time to send all.
-                        u8SendCnt = 0;
-                        vSetMovingPoint(u16Hue, u8Saturation, u8Brightness, true);
-                    }
+                    delay((255 - pEep->u8Speed)<<1); // wait max 500ms
+                    vSetMovingPoint(u16Hue, u8Saturation, u8Brightness, true);
                 }
                 break;
             default:
