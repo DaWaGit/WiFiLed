@@ -111,7 +111,9 @@
         // select the initially elements
         selectElement(document.getElementById('select').value);
         // Connect to WebSocket server
-        wsConnect(url);
+        if (!url.includes('wsUrl')) {
+          wsConnect(url);
+        }
       }
       //#########################################
       // select an element: color/wifi/...
@@ -203,6 +205,20 @@
           return;
         }
         //-----------------------------
+        // enable/disable distance sensor
+        result = evt.data.match(/^mSens:(\d+)$/i);
+        if (result) {
+          boSendToDevice = false;
+          if (Number(result[1])) {
+            $("#MotionSensorSwitch").prop('checked', true);
+            document.getElementById('offDelay').disabled = false;
+          } else {
+            $("#MotionSensorSwitch").prop('checked', false);
+            document.getElementById('offDelay').disabled = true;
+          }
+          return;
+        }
+        //-----------------------------
         // new brightness
         result = evt.data.match(/^setB:(\d+)$/i);
         if (result) {
@@ -245,6 +261,16 @@
         } else {
           doSend("dSens:0");
           document.getElementById('calibrationBtn').disabled = true;
+        }
+      }
+      //#########################################
+      function toggleMotionSensor() {
+        if ($("#MotionSensorSwitch").is(':checked')) {
+          doSend("mSens:1");
+          document.getElementById('offDelay').disabled = false;
+        } else {
+          doSend("mSens:0");
+          document.getElementById('offDelay').disabled = true;
         }
       }
       //#########################################
@@ -371,8 +397,7 @@
                 <td class="value"><input type="number" min="0" max="255" placeholder="0..255" id="bMax" name="bMax" value="`bMax`"></td>
               </tr>
               <tr>
-                <td class="value-name">off delay [s]</td>
-                <td class="value"><input type="number" min="4" max="255" placeholder="4..255" id="offDelay" name="offDelay" value="`offDelay`" onchange="if (Number(this.value)<4){this.value=4;}"></td>
+                <td class="value-name">&nbsp;</td><td class="value">&nbsp;</td>
               </tr>
               <tr>
                 <td class="value-name">&nbsp;</td><td class="value">&nbsp;</td>
@@ -387,25 +412,28 @@
           <table style=" width:100%; height:30px; border-collapse: collapse;">
             <tbody>
               <tr>
+                <td class="value-name" width="250px">motion sensor</td>
+                <td class="value"><label class="switch"><input id="MotionSensorSwitch" type="checkbox" onChange="toggleMotionSensor()"><span class="slider round"></span></label></td>
+              </tr>
+              <tr>
+                <td class="value-name">motion off delay [s]</td>
+                <td class="value"><input type="number" min="4" max="255" placeholder="4..255" id="offDelay" name="offDelay" value="`offDelay`" onchange="if (Number(this.value)<4){this.value=4;}"></td>
+              </tr>
+              <tr>
                 <td class="value-name" width="200px">distance sensor</td>
                 <td class="value"><label class="switch"><input id="DistanceSensorSwitch" type="checkbox" onChange="toggleDistanceSensor()"><span class="slider round"></span></label></td>
               </tr>
+              <tr>
                 <td class="value-name" width="200px">distance sensor</td>
                 <td class="value"><button id="calibrationBtn" class="btn" onmousedown='doSend("calib:1");' onmouseup='doSend("calib:0");'>calibrate</button></td>
-            </tr>
-            <tr>
-              <td class="value-name">&nbsp;</td><td class="value">&nbsp;</td>
-            </tr>
-            <tr>
-              <td class="value-name">&nbsp;</td><td class="value">&nbsp;</td>
-            </tr>
-            <tr>
-              <td class="value-name">&nbsp;</td><td class="value">&nbsp;</td>
-            </tr>
-            <tr>
-              <td class="value-name">factory reset</td>
-              <td class="value"><button class="btn" onclick='doSend("factoryReset"); alert("WiFiLed-`id` will now restart in WiFi AccessPoint mode!\n Connect your Wifi to this Accesspoint and configire SSID and Password!");'>start</button></td>
-            <tr>
+              </tr>
+              <tr>
+                <td class="value-name">&nbsp;</td><td class="value">&nbsp;</td>
+              </tr>
+              <tr>
+                <td class="value-name">factory reset</td>
+                <td class="value"><button class="btn" onclick='doSend("factoryReset"); alert("WiFiLed-`id` will now restart in WiFi AccessPoint mode!\n Connect your Wifi to this Accesspoint and configire SSID and Password!");'>start</button></td>
+              <tr>
             </tbody>
           </table>
         </div>

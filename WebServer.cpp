@@ -67,8 +67,10 @@ void WebServer::vInit(class Buttons *pNewButtons, class LedStripe *pNewLedStripe
     pWebSocket->begin();
     pWebSocket->onEvent(std::bind(&WebServer::vWebSocketEvent, this, _1, _2, _3, _4));
 
-    vSendStripeStatus(-1, true); // update values for every client
-    vSendColorMode(-1, true);    // update colorMode for every client
+    vSendStripeStatus(-1, true);          // update values for every client
+    vSendColorMode(-1, true);             // update colorMode for every client
+    vSendDistanceSensorEnabled(-1, true); // update sensor usage for every client
+    vSendMotionSensorEnabled(-1, true);   // update sensor usage for every client
 }
 
 //=======================================================================
@@ -164,6 +166,7 @@ void WebServer::vWebSocketEvent(uint8_t clientNumber,
                 vSendStripeStatus(clientNumber, false);
                 vSendColorMode(clientNumber, false);
                 vSendDistanceSensorEnabled(clientNumber, false);
+                vSendMotionSensorEnabled(clientNumber, false);
             } else if (strstr((char *)payload, "setB")) {
                 // change hue, saturation, brightness via web page
                 String sPayload    = String((char *)payload);
@@ -278,8 +281,15 @@ void WebServer::vWebSocketEvent(uint8_t clientNumber,
                 String sPayload = String((char *)payload);
                 int start       = sPayload.indexOf("dSens:") + 6;
                 int end         = sPayload.length();
-                pEep->vSetDistanceSensEnabled((uint8_t)(sPayload.substring(start, end).toInt()), true);
-                vSendColorMode(clientNumber, true);
+                pEep->vSetDistanceSensorEnabled((uint8_t)(sPayload.substring(start, end).toInt()), true);
+                vSendDistanceSensorEnabled(clientNumber, true);
+            } else if (strstr((char *)payload, "mSens")) {
+                // speed changed via web page
+                String sPayload = String((char *)payload);
+                int start       = sPayload.indexOf("mSens:") + 6;
+                int end         = sPayload.length();
+                pEep->vSetMotionSensorEnabled((uint8_t)(sPayload.substring(start, end).toInt()), true);
+                vSendMotionSensorEnabled(clientNumber, true);
             } else {
                 // Message not recognized
             }
@@ -333,13 +343,13 @@ void WebServer::vWebSocketEvent(uint8_t clientNumber,
 }
 
 //=======================================================================
-// send the current color mode to all active clinets
+// send the current u8DistanceSensorEnabled mode to all active clients
 void WebServer::vSendDistanceSensorEnabled(int clientNumber, bool boToAllClients) {
     char msg_buf[100];
 
     // get the current stripe status
     sprintf(msg_buf, "dSens:%d",
-            pEep->u8DistanceSensEnabled);
+            pEep->u8DistanceSensorEnabled);
     if (boToAllClients) {
         // send to all clients expect the selected one
         vSendBufferToAllClients(msg_buf, clientNumber);
@@ -350,7 +360,24 @@ void WebServer::vSendDistanceSensorEnabled(int clientNumber, bool boToAllClients
 }
 
 //=======================================================================
-// send the current color mode to all active clinets
+// send the current u8MotionSensorEnabled mode to all active clients
+void WebServer::vSendMotionSensorEnabled(int clientNumber, bool boToAllClients) {
+    char msg_buf[100];
+
+    // get the current stripe status
+    sprintf(msg_buf, "mSens:%d",
+            pEep->u8MotionSensorEnabled);
+    if (boToAllClients) {
+        // send to all clients expect the selected one
+        vSendBufferToAllClients(msg_buf, clientNumber);
+    } else {
+        // send only to the selected client
+        vSendBufferToOneClient(msg_buf, clientNumber);
+    }
+}
+
+//=======================================================================
+// send the current color mode to all active clients
 void WebServer::vSendColorMode(int clientNumber, bool boToAllClients) {
     char msg_buf[100];
 
@@ -368,7 +395,7 @@ void WebServer::vSendColorMode(int clientNumber, bool boToAllClients) {
 }
 
 //=======================================================================
-// send the current color mode to all active clinets
+// send the current color mode to all active clients
 void WebServer::vSendBrightness(int clientNumber, bool boToAllClients) {
     char msg_buf[100];
 
@@ -385,7 +412,7 @@ void WebServer::vSendBrightness(int clientNumber, bool boToAllClients) {
 }
 
 //=======================================================================
-// send the current stripe status to all active clinets
+// send the current stripe status to all active clients
 void WebServer::vSendStripeStatus(int clientNumber, bool boToAllClients) {
     char msg_buf[100];
 
@@ -417,7 +444,7 @@ void WebServer::vSendBufferToAllClients(char *msg_buf,int clientNumber) {
 }
 
 //=======================================================================
-// send the current stripe status to all active clinets
+// send the current stripe status to all active clients
 void WebServer::vSendBufferToOneClient(char *msg_buf,int clientNumber) {
     if (clientNumber >= 0) {
         if (u8DebugLevel & DEBUG_WEBSERVER_EVENTS) {

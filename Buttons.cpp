@@ -127,9 +127,10 @@ void Buttons::vLoop() {
     static uint8_t u8TmpSaturation   = 0;
     static uint8_t u8TmpBrightness   = 0;
 
-    vReadMotionSensor();
-
-    if (pEep->u8DistanceSensEnabled) {
+    if (pEep->u8MotionSensorEnabled) {
+        vReadMotionSensor();
+    }
+    if (pEep->u8DistanceSensorEnabled) {
         if ((millis() - ulLastAdcInterval) >= ADC_INTERVAL) {
             // patch: ADC read only every 5ms, otherwise WiFi connection will lost
             // see  : https://github.com/esp8266/Arduino/issues/1634

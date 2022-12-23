@@ -21,8 +21,9 @@
 #define EepAdr_u8ColorMode           (EepAdr_u8BrightnessMax + sizeof(uint8_t))
 #define EepAdr_u8Speed               (EepAdr_u8ColorMode + sizeof(uint8_t))
 #define EepAdr_u8MotionOffDelay      (EepAdr_u8Speed + sizeof(uint8_t))
-#define EepAdr_u8DistanceSensEnabled (EepAdr_u8MotionOffDelay + sizeof(uint8_t))
-#define EepAdr_Last                  (EepAdr_u8DistanceSensEnabled + sizeof(uint8_t))
+#define EepAdr_u8DistanceSensorEnabled (EepAdr_u8MotionOffDelay + sizeof(uint8_t))
+#define EepAdr_u8MotionSensorEnabled   (EepAdr_u8DistanceSensorEnabled + sizeof(uint8_t))
+#define EepAdr_Last                  (EepAdr_u8MotionSensorEnabled + sizeof(uint8_t))
 
 //=======================================================================
 Eep::Eep(uint8_t u8NewDebugLevel) {
@@ -55,7 +56,8 @@ void Eep::vInit() {
     EEPROM.get(EepAdr_u8ColorMode,           u8ColorMode); u8ColorMode = (u8ColorMode >= nNoMode) ? nNoMode-1 : u8ColorMode;
     EEPROM.get(EepAdr_u8Speed,               u8Speed);
     EEPROM.get(EepAdr_u8MotionOffDelay,      u8MotionOffDelay);
-    EEPROM.get(EepAdr_u8DistanceSensEnabled, u8DistanceSensEnabled);
+    EEPROM.get(EepAdr_u8DistanceSensorEnabled, u8DistanceSensorEnabled);
+    EEPROM.get(EepAdr_u8MotionSensorEnabled,   u8MotionSensorEnabled);
 
     if (u8DebugLevel & DEBUG_EEP_EVENTS) {
         char buffer[100];
@@ -72,7 +74,8 @@ void Eep::vInit() {
         sprintf(buffer, "Eep.Read Adr:0x%04X u8ColorMode           = %d ", EepAdr_u8ColorMode, u8ColorMode); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
         sprintf(buffer, "Eep.Read Adr:0x%04X u8Speed               = %d ", EepAdr_u8Speed, u8Speed); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
         sprintf(buffer, "Eep.Read Adr:0x%04X u8MotionOffDelay      = %d [s]", EepAdr_u8MotionOffDelay, u8MotionOffDelay); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X u8DistanceSensEnabled = %d [s]", EepAdr_u8DistanceSensEnabled, u8DistanceSensEnabled); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u8DistanceSensorEnabled = %d", EepAdr_u8DistanceSensorEnabled, u8DistanceSensorEnabled); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u8MotionSensorEnabled   = %d", EepAdr_u8MotionSensorEnabled, u8MotionSensorEnabled); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
     }
 }
 //=======================================================================
@@ -93,7 +96,8 @@ void Eep::vFactoryReset() {
     vSetColorMode(0, false);                    // color mode (0..2 default:0)
     vSetSpeed(128, false);                      // speed (1..255 default:128)
     vSetMotionOffDelay(60 - EepMotionOffDelayMin, false); // off delay (1..255 default:60)
-    vSetDistanceSensEnabled(0, false);          // enable/disable distance sense (0..255 default:0)
+    vSetDistanceSensorEnabled(0, false);          // enable/disable distance sensor (0..255 default:0)
+    vSetMotionSensorEnabled(1, false);            // enable/disable motion sensor (0..255 default:1)
 
     for (int i = 0; i < EepSizeWifiSsid-1; i++) { acWifiSsid[i] = 0; }
     for (int i = 0; i < EepSizeWifiPwd-1; i++)  { acWifiPwd[i]  = 0; }
@@ -114,7 +118,8 @@ void Eep::vFactoryReset() {
         sprintf(buffer, "Eep.Write Adr:0x%04X u8ColorMode           = %d ", EepAdr_u8ColorMode, u8ColorMode); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
         sprintf(buffer, "Eep.Write Adr:0x%04X u8Speed               = %d ", EepAdr_u8Speed, u8Speed); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
         sprintf(buffer, "Eep.Write Adr:0x%04X u8MotionOffDelay      = %d ", EepAdr_u8MotionOffDelay, u8MotionOffDelay); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Write Adr:0x%04X u8DistanceSensEnabled = %d ", EepAdr_u8DistanceSensEnabled, u8DistanceSensEnabled); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Write Adr:0x%04X u8DistanceSensorEnabled = %d ", EepAdr_u8DistanceSensorEnabled, u8DistanceSensorEnabled); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Write Adr:0x%04X u8MotionSensorEnabled   = %d ", EepAdr_u8MotionSensorEnabled, u8MotionSensorEnabled); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
         sprintf(buffer, "Eep.Write Adr:0x%04X acWifiSsid            = %s ", EepAdr_acWifiSsid, acWifiSsid); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
         sprintf(buffer, "Eep.Write Adr:0x%04X acWifiPwd             = %s ", EepAdr_acWifiPwd, acWifiPwd); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
     }
@@ -304,20 +309,38 @@ void Eep::vSetSpeed(uint8_t u8NewSpeed, bool boPrintConsole) {
 }
 
 //=======================================================================
-void Eep::vSetDistanceSensEnabled(uint8_t u8NewDistanceSensEnabled, bool boPrintConsole) {
-    uint8_t u8DistanceSensEnabled_Tmp = 0;
-    bool boUpdated      = false;
-    u8DistanceSensEnabled = u8NewDistanceSensEnabled;
-    EEPROM.get(EepAdr_u8DistanceSensEnabled, u8DistanceSensEnabled_Tmp); // read the current LedCount
-    if (u8DistanceSensEnabled_Tmp != u8DistanceSensEnabled) {
+void Eep::vSetDistanceSensorEnabled(uint8_t u8NewDistanceSensorEnabled, bool boPrintConsole) {
+    uint8_t u8DistanceSensorEnabled_Tmp = 0;
+    bool boUpdated                    = false;
+    u8DistanceSensorEnabled = u8NewDistanceSensorEnabled;
+    EEPROM.get(EepAdr_u8DistanceSensorEnabled, u8DistanceSensorEnabled_Tmp); // read the current LedCount
+    if (u8DistanceSensorEnabled_Tmp != u8DistanceSensorEnabled) {
         // at least one value changed
-        EEPROM.put(EepAdr_u8DistanceSensEnabled, u8DistanceSensEnabled);
+        EEPROM.put(EepAdr_u8DistanceSensorEnabled, u8DistanceSensorEnabled);
         EEPROM.commit();
         boUpdated = true;
     }
     if (u8DebugLevel & DEBUG_EEP_EVENTS && boPrintConsole) {
         char buffer[100];
-        sprintf(buffer, "Eep.Write Adr:0x%04X %s u8DistanceSensEnabled = %d ", EepAdr_u8DistanceSensEnabled, boUpdated ? "updated" : "unchanged", u8DistanceSensEnabled); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Write Adr:0x%04X %s u8DistanceSensorEnabled = %d ", EepAdr_u8DistanceSensorEnabled, boUpdated ? "updated" : "unchanged", u8DistanceSensorEnabled); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+    }
+}
+
+//=======================================================================
+void Eep::vSetMotionSensorEnabled(uint8_t u8NewMotionSensorEnabled, bool boPrintConsole) {
+    uint8_t u8MotionSensorEnabled_Tmp = 0;
+    bool boUpdated                  = false;
+    u8MotionSensorEnabled = u8NewMotionSensorEnabled;
+    EEPROM.get(EepAdr_u8MotionSensorEnabled, u8MotionSensorEnabled_Tmp); // read the current LedCount
+    if (u8MotionSensorEnabled_Tmp != u8MotionSensorEnabled) {
+        // at least one value changed
+        EEPROM.put(EepAdr_u8MotionSensorEnabled, u8MotionSensorEnabled);
+        EEPROM.commit();
+        boUpdated = true;
+    }
+    if (u8DebugLevel & DEBUG_EEP_EVENTS && boPrintConsole) {
+        char buffer[100];
+        sprintf(buffer, "Eep.Write Adr:0x%04X %s u8MotionSensorEnabled = %d ", EepAdr_u8MotionSensorEnabled, boUpdated ? "updated" : "unchanged", u8MotionSensorEnabled); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
     }
 }
 

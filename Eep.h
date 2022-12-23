@@ -27,7 +27,8 @@ class Eep {
         void vSetColorMode(uint8_t, bool);           // store color mode (0..2 default:0)
         void vSetSpeed(uint8_t, bool);               // store speed (1..255 default:128)
         void vSetMotionOffDelay(uint8_t, bool);      // store turn off delay [s] (1..255 default:60)
-        void vSetDistanceSensEnabled(uint8_t, bool); // store enable/disable distance sense (0..255 default:0)
+        void vSetDistanceSensorEnabled(uint8_t, bool); // store enable/disable distance sensor (0..255 default:0)
+        void vSetMotionSensorEnabled(uint8_t, bool);   // store enable/disable motion sensor (0..255 default:1)
 
         uint16_t u16LedCount;         // number of current configured LEDs (0..65535 default:300)
         uint16_t u16CalibrationValue; // distance sensor calibration value (0..65535 default:200)
@@ -41,7 +42,8 @@ class Eep {
         uint8_t u8ColorMode;          // color mode (0..2 default:0)
         uint8_t u8Speed;              // speed (0..255 default:128)
         uint8_t u8MotionOffDelay;     // turn off delay [s] (1..255 default:60)
-        uint8_t u8DistanceSensEnabled;// enable/disable distance sense (0..255 default:0)
+        uint8_t u8DistanceSensorEnabled;// enable/disable distance sensor (0..255 default:0)
+        uint8_t u8MotionSensorEnabled;  // enable/disable motion sensor (0..255 default:1)
 
     private:
         uint8_t u8DebugLevel = 0;

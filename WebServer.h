@@ -34,6 +34,7 @@ class WebServer {
         void vSendColorMode(int, bool);
         void vSendBrightness(int, bool);
         void vSendDistanceSensorEnabled(int, bool);
+        void vSendMotionSensorEnabled(int, bool);
         void vSendBufferToAllClients(char *, int);
         void vSendBufferToOneClient(char *, int);
         class Eep *pEep;
