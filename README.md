@@ -90,7 +90,7 @@ The following main devices are used in the schema:
 This project sends a lot of debug information via the serial interface. These data will be sent with **115200 baud**.<br>
 You can control which information should be sent, when you change the `DEBUG_LEVEL`in file [DebugLevel.h](https://github.com/DaWaGit/WiFiLed/blob/main/DebugLevel.h)
 
-https://github.com/DaWaGit/WiFiLed/blob/254f0afaa68c07f04bf132d93f9b39f9108e120c/DebugLevel.h#L1
+https://github.com/DaWaGit/WiFiLed/blob/254f0afaa68c07f04bf132d93f9b39f9108e120c/DebugLevel.h#L1-L22
 
 ----
 ## Getting Started
