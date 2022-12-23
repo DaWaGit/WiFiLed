@@ -105,8 +105,8 @@ When you turn on as first time, follow the next steps, to connect the device in 
    | Url      | http://192.168.1.4/  |
 
 1. Open in your browser the page http://192.168.1.4/
-1. In **WiFi Setup** add your WiFi SSID and password and press **Success**
-   ![screenshot](doc/wifisetup.png)
+1. In **WiFi Setup** add your WiFi SSID and password and press **Success**<br>
+   ![wifiSetup](doc/wifiSetup.png)
 1. The device starts new, but with a fast blinking onboard LED to inform you, the connection to your WiFi is trying
 1. When the WiFi connection is successfully established, the onboard LED is static on.<br>
 
