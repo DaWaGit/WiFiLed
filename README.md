@@ -20,7 +20,7 @@ The following features are realized.
 ## Hardware
 The following main devices are used in the schema:
 
-1. **Wemos D1 mini**: ESP-8266 CPU<br>
+1. **Wemos D1 mini**: ESP8266 CPU<br>
     doc: https://www.wemos.cc/en/latest/d1/d1_mini.html
 2. **WS2812B**: single addressable LED-stripe<br>
    doc: [data sheet](/doc/WS2812B.pdf)
@@ -114,3 +114,8 @@ When you turn on as first time, follow the next steps, to connect the device in 
    * open the IP in your browser to control the LED stripe
 1. When the WiFi connection fails after 3 minutes, the device will restart, but im WiFi-Access-Point mode (slow blinking onboard LED)<br>
    Repeat all steps from begin
+
+----
+## Known Issues
+
+* sporadic watchdog resets, because https://github.com/adafruit/Adafruit_NeoPixel is used in combination with a web server and socket connections
