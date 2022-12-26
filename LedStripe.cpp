@@ -71,7 +71,7 @@ void LedStripe::vSetColor(uint8_t clientNumber){
         // switch the current mode
         // dependent from current mode, enable the LEDs
         if ((tColorMode)pEep->u8ColorMode == nMonochrome) {
-            vSetMonochrome(pEep->u16Hue, pEep->u8Saturation, pEep->u8Brightness);
+            vSetMonochrome(pEep->u16Hue, pEep->u8Saturation, pEep->u8Brightness, pEep->u8Speed);
         } else if ((tColorMode)pEep->u8ColorMode == nRainbow) {
             vSetRainbow(pEep->u16Hue, pEep->u8Saturation, pEep->u8Brightness);
         } else if ((tColorMode)pEep->u8ColorMode == nRandom) {
@@ -102,7 +102,7 @@ void LedStripe::vTurn( bool boNewMode, bool boFast) {
         boCurrentSwitchMode = boNewMode;
         if (boNewMode) {
             vConsole( u8DebugLevel, DEBUG_LED_EVENTS, CLASS_NAME, __FUNCTION__, "LedStripe : fast ON" );
-            vSetMonochrome(pEep->u16Hue, pEep->u8Saturation, pEep->u8Brightness);
+            vSetMonochrome(pEep->u16Hue, pEep->u8Saturation, pEep->u8Brightness, pEep->u8Speed);
         } else {
             vConsole( u8DebugLevel, DEBUG_LED_EVENTS, CLASS_NAME, __FUNCTION__, "LedStripe : fast OFF" );
             strip->Begin();
@@ -143,11 +143,17 @@ void LedStripe::vSetValues(
 void LedStripe::vSetMonochrome(
     uint16_t u16NewHue,
     uint8_t u8NewSaturation,
-    uint8_t u8NewBrightness)
+    uint8_t u8NewBrightness,
+    uint8_t u8Speed)
 {
     // limit the brightness
     if (u8NewBrightness <= pEep->u8BrightnessMin) { u8NewBrightness = pEep->u8BrightnessMin; }
     if (u8NewBrightness >= pEep->u8BrightnessMax) { u8NewBrightness = pEep->u8BrightnessMax; }
+
+    if (pEep->u8Speed) { // change the color also during on/off dimming
+        u16NewHue += (uint16_t)pEep->u8Speed;
+        pEep->u16Hue = u16NewHue;
+    }
 
     RgbColor rgbGammaColor = colorGamma.Correct( // see: https://github.com/Makuna/NeoPixelBus/wiki/NeoGamma-object#rgbcolor-correctrgbcolor-original
         RgbColor(                           // see: https://github.com/Makuna/NeoPixelBus/wiki/RgbColor-object-API
@@ -292,7 +298,7 @@ void LedStripe::vLoop() {
         u8Brightness       = u8DampedBrightness;
 
         if ((tColorMode)pEep->u8ColorMode == nMonochrome) {
-            vSetMonochrome(u16Hue, u8Saturation, u8Brightness);
+            vSetMonochrome(u16Hue, u8Saturation, u8Brightness, pEep->u8Speed);
         } else if ((tColorMode)pEep->u8ColorMode == nRainbow) {
             vSetRainbow(pEep->u16Hue, u8Saturation, u8Brightness);
         } else if ((tColorMode)pEep->u8ColorMode == nRandom) {
@@ -322,7 +328,7 @@ void LedStripe::vLoop() {
             case nMonochrome: // use the same color of all pixels, but shift the color smoothly
                 if (pEep->u8Speed) {
                     pEep->u16Hue += (uint16_t)pEep->u8Speed;
-                    vSetMonochrome(pEep->u16Hue, u8Saturation, u8Brightness);
+                    vSetMonochrome(pEep->u16Hue, u8Saturation, u8Brightness, pEep->u8Speed);
                     if (pWebServer)
                         pWebServer->vSendStripeStatus(-1, true); // update values for every client
                 }

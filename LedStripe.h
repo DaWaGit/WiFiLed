@@ -25,7 +25,7 @@ class LedStripe {
         LedStripe(uint8_t);
         void vInit(class Eep *);
         void vTurn(bool, bool);
-        void vSetMonochrome(uint16_t, uint8_t, uint8_t);
+        void vSetMonochrome(uint16_t, uint8_t, uint8_t, uint8_t);
         void vSetRainbow(uint16_t, uint8_t, uint8_t);
         void vSetRandom(uint8_t, uint8_t, bool, uint8_t);
         void vSetMovingPoint(uint16_t, uint8_t, uint8_t, bool);

@@ -170,7 +170,7 @@ void Buttons::vLoop() {
             // calibration button was pressed
             vConsole(u8DebugLevel, DEBUG_BUTTON_EVENTS, CLASS_NAME, __FUNCTION__, "Button.CalibrationButton : Released");
             pEep->vSetCalibrationValue(pEep->u16CalibrationValue, true);
-            pLedStripe->vSetMonochrome(u16TmpHue, u8TmpSaturation, u8TmpBrightness);
+            pLedStripe->vSetMonochrome(u16TmpHue, u8TmpSaturation, u8TmpBrightness, pEep->u8Speed);
             pLedStripe->vTurn(boTmpStripeOn, true); // turn fast on/off
             enButtonStatus = nNone; // consume the status
             break;
@@ -206,7 +206,7 @@ void Buttons::vLoop() {
                         1024,
                         pEep->u8BrightnessMin,
                         pEep->u8BrightnessMax));
-                pLedStripe->vSetMonochrome(pLedStripe->u16GetHue(), pLedStripe->u8GetSaturation(), pEep->u8Brightness);
+                pLedStripe->vSetMonochrome(pLedStripe->u16GetHue(), pLedStripe->u8GetSaturation(), pEep->u8Brightness, pEep->u8Speed);
                 break;
                 case nIncremental:
                 default:
@@ -224,7 +224,7 @@ void Buttons::vLoop() {
                         else
                             boDarken = true; // change mode
                     }
-                    pLedStripe->vSetMonochrome(pLedStripe->u16GetHue(), pLedStripe->u8GetSaturation(), pEep->u8Brightness);
+                    pLedStripe->vSetMonochrome(pLedStripe->u16GetHue(), pLedStripe->u8GetSaturation(), pEep->u8Brightness, pEep->u8Speed);
                     break;
             }
             break;
