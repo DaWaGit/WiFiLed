@@ -77,7 +77,7 @@ The following main devices are used in the schema:
 1. select board **LOLIN(WEMOS) D1 R2 & mini**
 1. install the following libraries:
 
-    * [Adafruit NeoPixel](https://www.arduinolibraries.info/libraries/adafruit-neo-pixel)
+    * [NeoPixelBus](https://github.com/Makuna/NeoPixelBus)
     * [WebSockets](https://www.arduinolibraries.info/libraries/web-sockets)
     * [WiFi](https://www.arduinolibraries.info/libraries/wi-fi)
 1. connect device **Wemos D1 mini** via USB
@@ -118,4 +118,4 @@ When you turn on as first time, follow the next steps, to connect the device in 
 ----
 ## Known Issues
 
-* sporadic watchdog resets, because https://github.com/adafruit/Adafruit_NeoPixel is used in combination with a web server and socket connections
+*

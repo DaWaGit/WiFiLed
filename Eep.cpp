@@ -89,7 +89,7 @@ void Eep::vFactoryReset() {
     vSetHue(0, false);                          // color hue (0..65535 default:0)
     vSetSaturation(0, false);                   // color saturation value (0..65535 default:0)
     vSetBrightness(128, false);                 // color brightness (0..255 default_128)
-    vSetBrightnessMin(24, false);               // LED min brightness (0..255 default:24)
+    vSetBrightnessMin(18, false);               // LED min brightness (0..255 default:24)
     vSetBrightnessMax(0xff, false);             // LED max brightness (0..255 default:255)
     vSetDimMode(1, false);                      // 0:brightness ++ or -- 1:brightness via distance
     vSetWiFiMode(1, false);                     // wifi mode (0:SSID 1:AP default:1)

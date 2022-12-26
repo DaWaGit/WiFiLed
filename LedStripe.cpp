@@ -2,9 +2,7 @@
 #include "Utils.h"
 #include "DebugLevel.h"
 
-#define FLUSH_DELAY       5 // delay in ms after led tripe update
-#define DATA_PIN          D1
-#define CLASS_NAME        "LedStripe"
+#define CLASS_NAME "LedStripe"
 
 //=============================================================================
 LedStripe::LedStripe(uint8_t u8NewDebugLevel) {
@@ -14,20 +12,12 @@ LedStripe::LedStripe(uint8_t u8NewDebugLevel) {
 //=============================================================================
 void LedStripe::vInit(class Eep *pNewEep) {
     pEep = pNewEep;
-    // Declare our NeoPixel strip object:
-    stripe = new Adafruit_NeoPixel(pEep->u16LedCount, DATA_PIN, NEO_GRB + NEO_KHZ800);
-    // Argument 1 = Number of pixels in NeoPixel strip
-    // Argument 2 = Arduino pin number (most are valid)
-    // Argument 3 = Pixel type flags, add together as needed:
-    //              NEO_KHZ800  800 KHz bitstream (most NeoPixel products w/WS2812 LED's)
-    //              NEO_KHZ400  400 KHz (classic 'v1' (not v2) FLORA pixels, WS2811 drivers)
-    //              NEO_GRB     Pixels are wired for GRB bitstream (most NeoPixel products)
-    //              NEO_RGB     Pixels are wired for RGB bitstream (v1 FLORA pixels, not v2)
-    //              NEO_RGBW    Pixels are wired for RGBW bitstream (NeoPixel RGBW products)
-    stripe->begin(); // INITIALIZE NeoPixel strip object (REQUIRED)
-    stripe->clear();
-    stripe->show(); // flush
-    delay(FLUSH_DELAY);
+
+    // For Esp8266, the Pin is omitted and it uses GPIO3 due to DMA hardware use.
+    strip = new NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>(pEep->u16LedCount);
+    // this resets all the neopixels to an off state
+    strip->Begin(); // see: https://github.com/Makuna/NeoPixelBus/wiki/NeoPixelBus-object-API#void-begin
+    strip->Show();  // see: https://github.com/Makuna/NeoPixelBus/wiki/NeoPixelBus-object-API#void-showbool-maintainbufferconsistency--true
 
     if (u8DebugLevel & DEBUG_LED_EVENTS) {
         char buffer[100];
@@ -66,25 +56,32 @@ uint8_t LedStripe::u8GetBrightness(){
 }
 
 //=============================================================================
-void LedStripe::vSetColorMode(tColorMode enNewColorMode){
-    if ((uint8_t)enNewColorMode != pEep->u8ColorMode) {
+void LedStripe::vSetColorMode(tColorMode enNewColorMode, uint8_t clientNumber){
+    //if ((uint8_t)enNewColorMode != pEep->u8ColorMode) {
         pEep->vSetColorMode((uint8_t)enNewColorMode, true);
-        if (boGetSwitchStatus()) {
-            // when stripe is on and animation speed us zero
-            // switch the current mode
-            if ((tColorMode)pEep->u8ColorMode == nMonochrome) {
-                vSetMonochrome(pEep->u16Hue, pEep->u8Saturation, pEep->u8Brightness);
-            } else if ((tColorMode)pEep->u8ColorMode == nRainbow) {
-                vSetRainbow(pEep->u16Hue, pEep->u8Saturation, pEep->u8Brightness);
-            } else if ((tColorMode)pEep->u8ColorMode == nRandom) {
-                vSetRandom(pEep->u8Saturation, pEep->u8Brightness, true, pEep->u8Speed);
-            } else {
-                vSetMovingPoint(pEep->u16Hue, pEep->u8Saturation, pEep->u8Brightness, false);
-            }
+        // switch the current mode
+        vSetColor(clientNumber);
+        //}
+}
+
+//=============================================================================
+void LedStripe::vSetColor(uint8_t clientNumber){
+    if (boGetSwitchStatus()) {
+        // when stripe is on and animation speed is zero
+        // switch the current mode
+        // dependent from current mode, enable the LEDs
+        if ((tColorMode)pEep->u8ColorMode == nMonochrome) {
+            vSetMonochrome(pEep->u16Hue, pEep->u8Saturation, pEep->u8Brightness);
+        } else if ((tColorMode)pEep->u8ColorMode == nRainbow) {
+            vSetRainbow(pEep->u16Hue, pEep->u8Saturation, pEep->u8Brightness);
+        } else if ((tColorMode)pEep->u8ColorMode == nRandom) {
+            vSetRandom(pEep->u8Saturation, pEep->u8Brightness, true, pEep->u8Speed);
+        } else {
+            vSetMovingPoint(pEep->u16Hue, pEep->u8Saturation, pEep->u8Brightness, false);
         }
-        if (pWebServer)
-            pWebServer->vSendStripeStatus(-1, true); // update values for every client
     }
+    if (pWebServer)
+        pWebServer->vSendStripeStatus(clientNumber, true); // update values for every client
 }
 
 //=============================================================================
@@ -108,9 +105,8 @@ void LedStripe::vTurn( bool boNewMode, bool boFast) {
             vSetMonochrome(pEep->u16Hue, pEep->u8Saturation, pEep->u8Brightness);
         } else {
             vConsole( u8DebugLevel, DEBUG_LED_EVENTS, CLASS_NAME, __FUNCTION__, "LedStripe : fast OFF" );
-            stripe->clear(); // turn all off
-            stripe->show();  // flush
-            delay(FLUSH_DELAY);
+            strip->Begin();
+            strip->Show();
         }
     } else {
         // switch smooth
@@ -153,36 +149,51 @@ void LedStripe::vSetMonochrome(
     if (u8NewBrightness <= pEep->u8BrightnessMin) { u8NewBrightness = pEep->u8BrightnessMin; }
     if (u8NewBrightness >= pEep->u8BrightnessMax) { u8NewBrightness = pEep->u8BrightnessMax; }
 
-    uint32_t u32RgbColor = stripe->gamma32(stripe->ColorHSV(u16NewHue, u8NewSaturation, u8NewBrightness)); // get rgb color
-    if (boNewSwitchMode || boCurrentSwitchMode) {
-        // update stripe when it is turned on
-        stripe->fill(u32RgbColor, 0, pEep->u16LedCount); // set all
-        stripe->show();                                  // flush
-        delay(FLUSH_DELAY);
-    }
+    RgbColor rgbGammaColor = colorGamma.Correct( // see: https://github.com/Makuna/NeoPixelBus/wiki/NeoGamma-object#rgbcolor-correctrgbcolor-original
+        RgbColor(                           // see: https://github.com/Makuna/NeoPixelBus/wiki/RgbColor-object-API
+            HsbColor(                       // see: https://github.com/Makuna/NeoPixelBus/wiki/HsbColor-object-API
+                (float)u16NewHue / (float)0xffff,
+                (float)u8NewSaturation / (float)0xff,
+                (float)u8NewBrightness / (float)0xff)));
+
+    strip->ClearTo(rgbGammaColor); // see: https://github.com/Makuna/NeoPixelBus/wiki/NeoPixelBus-object-API#void-cleartocolorobject-color
+    strip->Show();
 
     if (u8DebugLevel & DEBUG_LED_DETAILS) {
         char buffer[100];
         sprintf(buffer, " Hue:0x%04x", u16NewHue);
         sprintf(buffer, "%s Sat:0x%02x", buffer, u8NewSaturation);
         sprintf(buffer, "%s Bri:0x%02x", buffer, u8NewBrightness);
-        sprintf(buffer, "%s RGB:0x%06x", buffer, u32RgbColor);
+        sprintf(buffer, "%s RGB:0x%02x%02x%02x", buffer, rgbGammaColor.R, rgbGammaColor.G, rgbGammaColor.B);
         vConsole(u8DebugLevel, DEBUG_LED_DETAILS, CLASS_NAME, __FUNCTION__, buffer);
     }
 }
 
 //=============================================================================
 void LedStripe::vSetRainbow(
-    long lStartHue,
+    uint16_t u16StartHue,
     uint8_t u8Saturation,
-    uint8_t u8Brightness )
-{ // see: https://learn.adafruit.com/black-lives-matter-badge/arduino-neopixel-rainbow
-    for(int iLedCnt=0; iLedCnt < pEep->u16LedCount; iLedCnt++) {
-        int pixelHue = lStartHue + (iLedCnt * 65536L / pEep->u16LedCount);
-        stripe->setPixelColor(iLedCnt, stripe->gamma32(stripe->ColorHSV(pixelHue, u8Saturation, u8Brightness)));
+    uint8_t u8Brightness)
+{
+    float fSaturation = (float)u8Saturation / (float)0xff;
+    float fBrightness = (float)u8Brightness / (float)0xff;
+    for (uint16_t u16LedIdx = 0; u16LedIdx < pEep->u16LedCount; u16LedIdx++) {
+        // loop over all pixels
+        uint16_t u16PixelHue = u16StartHue + (u16LedIdx * 65536L / pEep->u16LedCount);
+        strip->SetPixelColor( // see: https://github.com/Makuna/NeoPixelBus/wiki/NeoPixelBus-object-API#void-setpixelcoloruint16_t-indexpixel-colorobject-color
+            u16LedIdx,
+            colorGamma.Correct( // see: https://github.com/Makuna/NeoPixelBus/wiki/NeoGamma-object#rgbcolor-correctrgbcolor-original
+                RgbColor(       // see: https://github.com/Makuna/NeoPixelBus/wiki/RgbColor-object-API
+                    HsbColor(   // see: https://github.com/Makuna/NeoPixelBus/wiki/HsbColor-object-API
+                        (float)u16PixelHue / (float)0xffff,
+                        fSaturation,
+                        fBrightness
+                    )
+                )
+            )
+        );
     }
-    stripe->show();
-    delay(FLUSH_DELAY);
+    strip->Show();
 }
 
 //=============================================================================
@@ -193,21 +204,33 @@ void LedStripe::vSetRandom(
     uint8_t u8Speed)
 {
     static uint16_t aHue[300];
+    float fSaturation = (float)u8Saturation / (float)0xff;
+    float fBrightness = (float)u8Brightness / (float)0xff;
 
-    for(int iLedCnt=0; iLedCnt < pEep->u16LedCount; iLedCnt++) {
+    for(uint16_t u16LedIdx=0; u16LedIdx < pEep->u16LedCount; u16LedIdx++) {
         if (boInitNewColors) {
-            aHue[iLedCnt] = random(0x0000, 0xffff);
+            aHue[u16LedIdx] = random(0x0000, 0xffff);
         } else if (u8Speed) {
-            if (iLedCnt & 0x0001) {
-                aHue[iLedCnt] += u8Speed;
+            if (u16LedIdx & 0x0001) {
+                aHue[u16LedIdx] += u8Speed;
             } else {
-                aHue[iLedCnt] -= u8Speed;
+                aHue[u16LedIdx] -= u8Speed;
             }
         }
-        stripe->setPixelColor(iLedCnt, stripe->gamma32(stripe->ColorHSV(aHue[iLedCnt], u8Saturation, u8Brightness)));
+        strip->SetPixelColor( // see: https://github.com/Makuna/NeoPixelBus/wiki/NeoPixelBus-object-API#void-setpixelcoloruint16_t-indexpixel-colorobject-color
+            u16LedIdx,
+            colorGamma.Correct( // see: https://github.com/Makuna/NeoPixelBus/wiki/NeoGamma-object#rgbcolor-correctrgbcolor-original
+                RgbColor(       // see: https://github.com/Makuna/NeoPixelBus/wiki/RgbColor-object-API
+                    HsbColor(   // see: https://github.com/Makuna/NeoPixelBus/wiki/HsbColor-object-API
+                        (float)aHue[u16LedIdx] / (float)0xffff,
+                        fSaturation,
+                        fBrightness
+                    )
+                )
+            )
+        );
     }
-    stripe->show();
-    delay(FLUSH_DELAY);
+    strip->Show();
 }
 
 //=============================================================================
@@ -217,29 +240,42 @@ void LedStripe::vSetMovingPoint(
     uint8_t u8Brightness,
     bool boMove)
 {
-    static int iPos         = 0;
+    static uint16_t u16Pos    = 0;
     static bool boDirection = false;
+    float fHue              = (float)u16NewHue / (float)0xffff;
+    float fSaturation       = (float)u8Saturation / (float)0xff;
+    float fBrightness       = (float)u8Brightness / (float)0xff;
 
     if (boMove) {
         if (boDirection) {
-            if (++iPos >= pEep->u16LedCount) {
-                iPos -= 2;
+            if (++u16Pos >= pEep->u16LedCount) {
+                u16Pos -= 2;
                 boDirection = !boDirection;
             }
         } else {
-            if (iPos > 0) {
-                --iPos;
+            if (u16Pos > 0) {
+                --u16Pos;
             } else {
-                ++iPos;
+                ++u16Pos;
                 boDirection = !boDirection;
             }
         }
     }
-    for (int iLedCnt = 0; iLedCnt < pEep->u16LedCount; iLedCnt++) {
-        stripe->setPixelColor(iLedCnt, stripe->gamma32(stripe->ColorHSV(u16NewHue, u8Saturation, iPos == iLedCnt ? u8Brightness : 0)));
+    for (uint16_t u16LedIdx = 0; u16LedIdx < pEep->u16LedCount; u16LedIdx++) {
+        strip->SetPixelColor( // see: https://github.com/Makuna/NeoPixelBus/wiki/NeoPixelBus-object-API#void-setpixelcoloruint16_t-indexpixel-colorobject-color
+            u16LedIdx,
+            colorGamma.Correct( // see: https://github.com/Makuna/NeoPixelBus/wiki/NeoGamma-object#rgbcolor-correctrgbcolor-original
+                RgbColor(       // see: https://github.com/Makuna/NeoPixelBus/wiki/RgbColor-object-API
+                    HsbColor(   // see: https://github.com/Makuna/NeoPixelBus/wiki/HsbColor-object-API
+                        fHue,
+                        fSaturation,
+                        u16Pos == u16LedIdx ? fBrightness : 0
+                    )
+                )
+            )
+        );
     }
-    stripe->show();
-    delay(FLUSH_DELAY);
+    strip->Show();
 }
 
 //=============================================================================
@@ -273,9 +309,8 @@ void LedStripe::vLoop() {
         } else {
             if ((u8DampedBrightness - 1) <= pEep->u8BrightnessMin) {
                 boCurrentSwitchMode = boNewSwitchMode;
-                stripe->clear(); // turn all off
-                stripe->show();  // flush
-                delay(FLUSH_DELAY);
+                strip->Begin();
+                strip->Show();
             }
         }
     } else if (   (boCurrentSwitchMode || boNewSwitchMode)
@@ -285,22 +320,20 @@ void LedStripe::vLoop() {
         // manage color mode
         switch ((tColorMode)pEep->u8ColorMode) {
             case nMonochrome: // use the same color of all pixels, but shift the color smoothly
-                pEep->u16Hue   += (uint16_t)pEep->u8Speed;
-                u16Hue         = pEep->u16Hue;
-                vSetMonochrome(u16Hue, u8Saturation, u8Brightness);
-                if (++u16SendCnt > 25) {
-                    // PATCH: Do not send each change, because web socket need time to send all.
-                    u16SendCnt = 0;
+                if (pEep->u8Speed) {
+                    pEep->u16Hue += (uint16_t)pEep->u8Speed;
+                    vSetMonochrome(pEep->u16Hue, u8Saturation, u8Brightness);
                     if (pWebServer)
                         pWebServer->vSendStripeStatus(-1, true); // update values for every client
                 }
                 break;
             case nRainbow: // draw a rainbow and shift/move the colors
-                pEep->u16Hue += (uint16_t)pEep->u8Speed;
-                vSetRainbow(pEep->u16Hue, u8Saturation, u8Brightness);
-                if (++u16SendCnt > 25) {
-                    // PATCH: Do not send each change, because web socket need time to send all.
-                    u16SendCnt = 0;
+                if (pEep->u8Speed) {
+                    delay((255 - pEep->u8Speed) << 1); // wait max 500ms
+                    strip->RotateRight(1);
+                    strip->Show();
+                    HsbColor hsbColor = HsbColor(strip->GetPixelColor(0)); // get color from the first pixel
+                    pEep->u16Hue = (uint16_t)((float)hsbColor.H * (float)0xffff); // get hue from the first pixel
                     if (pWebServer)
                         pWebServer->vSendStripeStatus(-1, true); // update values for every client
                 }

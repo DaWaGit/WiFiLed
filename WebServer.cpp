@@ -191,7 +191,7 @@ void WebServer::vWebSocketEvent(uint8_t clientNumber,
                 uint8_t u8NewBrightness = (uint8_t)sPayload.substring(start, end).toInt();
 
                 pLedStripe->vSetValues(u16NewHue, u8NewSaturation, u8NewBrightness);
-                pLedStripe->vSetColorMode((tColorMode)pEep->u8ColorMode);
+                pLedStripe->vSetColor(clientNumber);
             } else if (strstr((char *)payload, "ledCount")) {
                 // number of LEDs changed via web page
                 String sPayload = String((char *)payload);
@@ -258,7 +258,7 @@ void WebServer::vWebSocketEvent(uint8_t clientNumber,
                 String sPayload = String((char *)payload);
                 int start       = sPayload.indexOf("colorMode:") + 10;
                 int end         = sPayload.length();
-                pLedStripe->vSetColorMode((tColorMode)sPayload.substring(start, end).toInt());
+                pLedStripe->vSetColorMode((tColorMode)sPayload.substring(start, end).toInt(), clientNumber);
                 vSendColorMode(clientNumber, true);
             } else if (strstr((char *)payload, "speed")) {
                 // speed changed via web page
