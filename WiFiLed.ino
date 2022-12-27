@@ -36,7 +36,7 @@ void setup() {
     Serial.setDebugOutput(DEBUG_LEVEL & DEBUG_GLOBAL_OUTPUT ? true : false);
 
     oEep.vInit();                       // download all EEP values
-    oLedStripe.vInit(&oEep);            // define first used brightness
+    oLedStripe.vInit(&oEep);            // init LED strip
     oButtons.vInit(&oLedStripe, &oEep); // init Buttons
 #if ENABLE_WLAN
     oWlan.vInit(&oButtons , &oLedStripe, &oEep); // init Wlan+Webserver

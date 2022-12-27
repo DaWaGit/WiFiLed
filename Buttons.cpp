@@ -123,9 +123,6 @@ void Buttons::vLoop() {
     static bool boStripeOn           = false;
     static bool boDarken             = true; // true:u8Brightness-- / false: u8Brightness++
     static PT1 *cDimDamp             = new PT1(10, 300);
-    static uint16_t u16TmpHue        = 0;
-    static uint8_t u8TmpSaturation   = 0;
-    static uint8_t u8TmpBrightness   = 0;
 
     if (pEep->u8MotionSensorEnabled) {
         vReadMotionSensor();
@@ -150,18 +147,14 @@ void Buttons::vLoop() {
     switch (enButtonStatus)  {
         //..............................
         case nCalibrationButton_Pressed:
+            pLedStripe->vSetDistanceCalibrationActive(true);
             if (!boButtonStatusShowed) {
                 vConsole(u8DebugLevel, DEBUG_BUTTON_EVENTS, CLASS_NAME, __FUNCTION__, "Button.CalibrationButton : Pressend");
                 // store the current LED status
-                u16TmpHue       = pLedStripe->u16GetHue();
-                u8TmpSaturation = pLedStripe->u8GetSaturation();
-                u8TmpBrightness = pLedStripe->u8GetBrightness();
-
                 pEep->u16CalibrationValue = 0; // reset calibration value
                 boTmpStripeOn             = pLedStripe->boGetSwitchStatus();
-                pLedStripe->vTurn(false, true); // turn fast off
-                pLedStripe->vSetValues(0, 0, pEep->u8BrightnessMax);
-                pLedStripe->vTurn(true, true); // turn fast on
+                if (boTmpStripeOn) pLedStripe->vTurn(false, true); // turn fast off
+                pLedStripe->vSetMonochrome(0, 0, pEep->u8BrightnessMax,0);
                 boButtonStatusShowed = true;
             }
             break;
@@ -170,7 +163,8 @@ void Buttons::vLoop() {
             // calibration button was pressed
             vConsole(u8DebugLevel, DEBUG_BUTTON_EVENTS, CLASS_NAME, __FUNCTION__, "Button.CalibrationButton : Released");
             pEep->vSetCalibrationValue(pEep->u16CalibrationValue, true);
-            pLedStripe->vSetMonochrome(u16TmpHue, u8TmpSaturation, u8TmpBrightness, pEep->u8Speed);
+            pLedStripe->vSetDistanceCalibrationActive(false);
+            pLedStripe->vSetColor(-1);
             pLedStripe->vTurn(boTmpStripeOn, true); // turn fast on/off
             enButtonStatus = nNone; // consume the status
             break;
@@ -183,6 +177,8 @@ void Buttons::vLoop() {
             enButtonStatus = nNone; // consume the status
             boStripeOn     = !pLedStripe->boGetSwitchStatus(); // toggle turn mode
             pLedStripe->vTurn(boStripeOn, false); // turn smooth on/off
+            if (pWebServer)
+                pWebServer->vSendStripeStatus(-1, true); // update values for every web client
             break;
         //..............................
         case nIrButton_LongPress:
@@ -206,7 +202,7 @@ void Buttons::vLoop() {
                         1024,
                         pEep->u8BrightnessMin,
                         pEep->u8BrightnessMax));
-                pLedStripe->vSetMonochrome(pLedStripe->u16GetHue(), pLedStripe->u8GetSaturation(), pEep->u8Brightness, pEep->u8Speed);
+                pLedStripe->vSetColor(-1);
                 break;
                 case nIncremental:
                 default:
@@ -224,7 +220,7 @@ void Buttons::vLoop() {
                         else
                             boDarken = true; // change mode
                     }
-                    pLedStripe->vSetMonochrome(pLedStripe->u16GetHue(), pLedStripe->u8GetSaturation(), pEep->u8Brightness, pEep->u8Speed);
+                    pLedStripe->vSetColor(-1);
                     break;
             }
             break;

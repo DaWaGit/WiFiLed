@@ -213,10 +213,10 @@ void WebServer::vWebSocketEvent(uint8_t clientNumber,
                 pEep->vSetMotionOffDelay((uint8_t)sPayload.substring(start, end).toInt(), true); // store the new value in EEP
 
                 bool boSwitchStatus = pLedStripe->boGetSwitchStatus(); // get the current switch status
-                pLedStripe->vTurn(false, true);          // set the last switch status again
-                pLedStripe->vInit(pEep);                 // reinitialize the the new LedCount
-                pLedStripe->vTurn(boSwitchStatus, true); // set the last switch status again
-                vSendStripeStatus(clientNumber, true);   // update values for every client expect himself
+                if (boSwitchStatus) pLedStripe->vTurn(false, true);    // set the last switch status again
+                pLedStripe->vInit(pEep);                               // reinitialize the the new LedCount
+                if (boSwitchStatus) pLedStripe->vTurn(boSwitchStatus, true); // set the last switch status again
+                vSendStripeStatus(clientNumber, true);                       // update values for every client expect himself
             } else if (strstr((char *)payload, "Ssid")) {
                 // WiFi config changed via web page
                 String sPayload = String((char *)payload);
@@ -410,9 +410,9 @@ void WebServer::vSendStripeStatus(int clientNumber, bool boToAllClients) {
     // get the current stripe status
     sprintf(msg_buf, "sw:%dh:%ds:%db:%d",
             pLedStripe->boGetSwitchStatus(),
-            pLedStripe->u16GetHue(),
-            pLedStripe->u8GetSaturation(),
-            pLedStripe->u8GetBrightness());
+            pEep->u16Hue,
+            pEep->u8Saturation,
+            pEep->u8Brightness);
     if (boToAllClients) {
         // send to all clients expect the selected one
         vSendBufferToAllClients(msg_buf, clientNumber);
