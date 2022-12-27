@@ -22,13 +22,11 @@ The following main devices are used in the schema:
 
 1. **Wemos D1 mini**: ESP8266 CPU<br>
     doc: https://www.wemos.cc/en/latest/d1/d1_mini.html
-2. **WS2812B**: single addressable LED-stripe<br>
+1. **WS2812B**: single addressable LED-stripe<br>
    doc: [data sheet](/doc/WS2812B.pdf)
-3. **74AHC125**: level shifter 3V->5V<br>
-   doc: [data sheet](/doc/74AHC125.pdf)
-4. **AM312**: IR motion sensor<br>
+1. **AM312**: IR motion sensor<br>
    doc: [data sheet](/doc/AM312.pdf)
-5. **GP2Y0A21YK0F**: IR distance sensor<br>
+1. **GP2Y0A21YK0F**: IR distance sensor<br>
    doc: [data sheet](/doc/GP2Y0A21YK0F.pdf)
 
 ### circuit diagram
@@ -82,4 +80,4 @@ When you turn on as first time, follow the next steps, to connect the device in 
 ----
 ## Known Issues
 
-*
+* none
