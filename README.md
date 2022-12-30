@@ -24,9 +24,9 @@ The following main devices are used in the schema:
     doc: https://www.wemos.cc/en/latest/d1/d1_mini.html
 1. **WS2812B**: single addressable LED-stripe<br>
    doc: [data sheet](/doc/WS2812B.pdf)
-1. **AM312**: IR motion sensor<br>
+1. **AM312**: IR motion sensor (optional)<br>
    doc: [data sheet](/doc/AM312.pdf)
-1. **GP2Y0A21YK0F**: IR distance sensor<br>
+1. **GP2Y0A21YK0F**: IR distance sensor (optional)<br>
    doc: [data sheet](/doc/GP2Y0A21YK0F.pdf)
 
 ### circuit diagram
