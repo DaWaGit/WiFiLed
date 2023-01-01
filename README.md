@@ -29,8 +29,11 @@ The following main devices are used in the schema:
 1. **GP2Y0A21YK0F**: IR distance sensor (optional)<br>
    doc: [data sheet](/doc/GP2Y0A21YK0F.pdf)
 
-### circuit diagram
+### Circuit Diagram
 ![schema](doc/schema.png)
+
+### Net-Plan
+![net plan](doc/NetPlan.png)
 
 ----
 ## Compile & Flash
