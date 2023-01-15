@@ -417,7 +417,7 @@
               </tr>
               <tr>
                 <td class="value-name">motion off delay [s]</td>
-                <td class="value"><input type="number" min="4" max="255" placeholder="4..255" id="offDelay" name="offDelay" value="`offDelay`" onchange="if (Number(this.value)<4){this.value=4;}"></td>
+                <td class="value"><input type="number" min="4" max="255" placeholder="4..255" id="offDelay" name="offDelay" value="`offDelay`" onchange='if (Number(this.value)<4){this.value=4;};doSend("ledCount:"+document.getElementById("ledCount").value+"bMin:"+document.getElementById("bMin").value+"bMax:"+document.getElementById("bMax").value+"offDelay:"+(Number(document.getElementById("offDelay").value)-4));'></td>
               </tr>
               <tr>
                 <td class="value-name" width="200px">distance sensor</td>

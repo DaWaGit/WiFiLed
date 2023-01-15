@@ -4,6 +4,16 @@
 
 #define CLASS_NAME "LedStripe"
 
+const RgbColor rgbOff = RgbColor(HsbColor(0, 0, 0));
+const uint8_t u8DimMatrix[5][6] = {
+  // 0  1  2  3  4  5   // LED index
+    {1, 0, 0, 0, 0, 0}, // DimLevel 0
+    {1, 0, 0, 1, 0, 0}, // DimLevel 1
+    {1, 0, 0, 1, 1, 0}, // DimLevel 2
+    {1, 1, 0, 1, 1, 0}, // DimLevel 3
+    {1, 1, 1, 1, 1, 0}  // DimLevel 4
+};
+
 //=============================================================================
 LedStripe::LedStripe(uint8_t u8NewDebugLevel) {
     u8DebugLevel = u8NewDebugLevel;
@@ -151,8 +161,9 @@ void LedStripe::vSetMonochrome(
     uint8_t u8Speed)
 {
     // limit the brightness
-    if (u8NewBrightness <= pEep->u8BrightnessMin) { u8NewBrightness = pEep->u8BrightnessMin; }
-    if (u8NewBrightness >= pEep->u8BrightnessMax) { u8NewBrightness = pEep->u8BrightnessMax; }
+    uint8_t u8SetBrightness = u8NewBrightness;
+    if (u8NewBrightness <= pEep->u8BrightnessMin) { u8SetBrightness = pEep->u8BrightnessMin; }
+    if (u8NewBrightness >= pEep->u8BrightnessMax) { u8SetBrightness = pEep->u8BrightnessMax; }
 
     if (pEep->u8Speed) { // change the color also during on/off dimming
         u16NewHue += (uint16_t)pEep->u8Speed;
@@ -164,9 +175,19 @@ void LedStripe::vSetMonochrome(
             HsbColor(                            // see: https://github.com/Makuna/NeoPixelBus/wiki/HsbColor-object-API
                 (float)u16NewHue / (float)0xffff,
                 (float)u8NewSaturation / (float)0xff,
-                (float)u8NewBrightness / (float)0xff)));
+                (float)u8SetBrightness / (float)0xff)));
 
-    strip->ClearTo(rgbGammaColor); // see: https://github.com/Makuna/NeoPixelBus/wiki/NeoPixelBus-object-API#void-cleartocolorobject-color
+    if (u8NewBrightness > pEep->u8BrightnessMin) {
+        strip->ClearTo(rgbGammaColor); // see: https://github.com/Makuna/NeoPixelBus/wiki/NeoPixelBus-object-API#void-cleartocolorobject-color
+    } else {
+        uint8_t u8DimLevel = (uint8_t)((float)u8NewBrightness / (float)((float)pEep->u8BrightnessMin / (float)4)); // 0,1,2,3,4
+        for (uint16_t u16LedIdx = 0; u16LedIdx < pEep->u16LedCount; u16LedIdx++) {
+            // loop over all pixels
+            strip->SetPixelColor( // see: https://github.com/Makuna/NeoPixelBus/wiki/NeoPixelBus-object-API#void-setpixelcoloruint16_t-indexpixel-colorobject-color
+                u16LedIdx,
+                u8DimMatrix[u8DimLevel][u16LedIdx % 6] ? rgbGammaColor : rgbOff);
+        }
+    }
     strip->Show();
 
     if (u8DebugLevel & DEBUG_LED_DETAILS) {
@@ -177,27 +198,34 @@ void LedStripe::vSetMonochrome(
         sprintf(buffer, "%s RGB:0x%02x%02x%02x", buffer, rgbGammaColor.R, rgbGammaColor.G, rgbGammaColor.B);
         vConsole(u8DebugLevel, DEBUG_LED_DETAILS, CLASS_NAME, __FUNCTION__, buffer);
     }
+
 }
 
 //=============================================================================
 void LedStripe::vSetRainbow(
-    uint16_t u16StartHue,
-    uint8_t u8Saturation,
-    uint8_t u8Brightness,
+    uint16_t u16NewStartHue,
+    uint8_t u8NewSaturation,
+    uint8_t u8NewBrightness,
     uint8_t u8Speed)
 {
+    // limit the brightness
+    uint8_t u8SetBrightness = u8NewBrightness;
+    if (u8NewBrightness <= pEep->u8BrightnessMin) { u8SetBrightness = pEep->u8BrightnessMin; }
+    if (u8NewBrightness >= pEep->u8BrightnessMax) { u8SetBrightness = pEep->u8BrightnessMax; }
+    uint8_t u8DimLevel = (uint8_t)((float)u8NewBrightness / (float)((float)pEep->u8BrightnessMin / (float)4)); // 0,1,2,3,4
+
     // calculate saturation and brightness
-    float fSaturation = (float)u8Saturation / (float)0xff;
-    float fBrightness = (float)u8Brightness / (float)0xff;
+    float fSaturation = (float)u8NewSaturation / (float)0xff;
+    float fBrightness = (float)u8SetBrightness / (float)0xff;
 
     if (pEep->u8Speed) { // change the color also during on/off dimming
-        u16StartHue += (uint16_t)pEep->u8Speed;
-        pEep->u16Hue = u16StartHue;
+        u16NewStartHue += (uint16_t)pEep->u8Speed;
+        pEep->u16Hue = u16NewStartHue;
     }
 
     for (uint16_t u16LedIdx = 0; u16LedIdx < pEep->u16LedCount; u16LedIdx++) {
         // loop over all pixels
-        uint16_t u16PixelHue = u16StartHue + (u16LedIdx * 65536L / pEep->u16LedCount);
+        uint16_t u16PixelHue = u16NewStartHue + (u16LedIdx * 65536L / pEep->u16LedCount);
         strip->SetPixelColor( // see: https://github.com/Makuna/NeoPixelBus/wiki/NeoPixelBus-object-API#void-setpixelcoloruint16_t-indexpixel-colorobject-color
             u16LedIdx,
             colorGamma.Correct( // see: https://github.com/Makuna/NeoPixelBus/wiki/NeoGamma-object#rgbcolor-correctrgbcolor-original
@@ -205,7 +233,7 @@ void LedStripe::vSetRainbow(
                     HsbColor(   // see: https://github.com/Makuna/NeoPixelBus/wiki/HsbColor-object-API
                         (float)u16PixelHue / (float)0xffff,
                         fSaturation,
-                        fBrightness
+                        (u8NewBrightness > pEep->u8BrightnessMin) ? fBrightness : (u8DimMatrix[u8DimLevel][u16LedIdx % 6] ? fBrightness : 0)
                     )
                 )
             )
@@ -216,14 +244,21 @@ void LedStripe::vSetRainbow(
 
 //=============================================================================
 void LedStripe::vSetRandom(
-    uint8_t u8Saturation,
-    uint8_t u8Brightness,
+    uint8_t u8NewSaturation,
+    uint8_t u8NewBrightness,
     bool boInitNewColors,
     uint8_t u8Speed)
 {
     static uint16_t aHue[300];
-    float fSaturation = (float)u8Saturation / (float)0xff;
-    float fBrightness = (float)u8Brightness / (float)0xff;
+
+    // limit the brightness
+    uint8_t u8SetBrightness = u8NewBrightness;
+    if (u8NewBrightness <= pEep->u8BrightnessMin) { u8SetBrightness = pEep->u8BrightnessMin; }
+    if (u8NewBrightness >= pEep->u8BrightnessMax) { u8SetBrightness = pEep->u8BrightnessMax; }
+    uint8_t u8DimLevel = (uint8_t)((float)u8NewBrightness / (float)((float)pEep->u8BrightnessMin / (float)4)); // 0,1,2,3,4
+
+    float fSaturation = (float)u8NewSaturation / (float)0xff;
+    float fBrightness = (float)u8SetBrightness / (float)0xff;
 
     for(uint16_t u16LedIdx=0; u16LedIdx < pEep->u16LedCount; u16LedIdx++) {
         if (boInitNewColors) {
@@ -242,7 +277,7 @@ void LedStripe::vSetRandom(
                     HsbColor(   // see: https://github.com/Makuna/NeoPixelBus/wiki/HsbColor-object-API
                         (float)aHue[u16LedIdx] / (float)0xffff,
                         fSaturation,
-                        fBrightness
+                        (u8NewBrightness > pEep->u8BrightnessMin) ? fBrightness : (u8DimMatrix[u8DimLevel][u16LedIdx % 6] ? fBrightness : 0)
                     )
                 )
             )
@@ -254,15 +289,21 @@ void LedStripe::vSetRandom(
 //=============================================================================
 void LedStripe::vSetMovingPoint(
     uint16_t u16NewHue,
-    uint8_t u8Saturation,
-    uint8_t u8Brightness,
+    uint8_t u8NewSaturation,
+    uint8_t u8NewBrightness,
     bool boMove)
 {
-    static uint16_t u16Pos    = 0;
+    static uint16_t u16Pos  = 0;
     static bool boDirection = false;
+
+    // limit the brightness
+    uint8_t u8SetBrightness = u8NewBrightness;
+    if (u8NewBrightness <= pEep->u8BrightnessMin) { u8SetBrightness = pEep->u8BrightnessMin; }
+    if (u8NewBrightness >= pEep->u8BrightnessMax) { u8SetBrightness = pEep->u8BrightnessMax; }
+
     float fHue              = (float)u16NewHue / (float)0xffff;
-    float fSaturation       = (float)u8Saturation / (float)0xff;
-    float fBrightness       = (float)u8Brightness / (float)0xff;
+    float fSaturation       = (float)u8NewSaturation / (float)0xff;
+    float fBrightness       = (float)u8SetBrightness / (float)0xff;
 
     if (boMove) {
         if (boDirection) {

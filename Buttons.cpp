@@ -195,15 +195,15 @@ void Buttons::vLoop() {
             switch ((tDimMode)pEep->u8DimMode) {
                 case nByDistance:
                     // change brightness via distance
-                pEep->u8Brightness = (uint8_t)cDimDamp->fGetDampedVal(
-                    map(
-                        u16IrDistance,
-                        pEep->u16CalibrationValue,
-                        1024,
-                        pEep->u8BrightnessMin,
-                        pEep->u8BrightnessMax));
-                pLedStripe->vSetColor(-1);
-                break;
+                    pEep->u8Brightness = (uint8_t)cDimDamp->fGetDampedVal(
+                        map(
+                            u16IrDistance,
+                            pEep->u16CalibrationValue,
+                            1024,
+                            pEep->u8BrightnessMin,
+                            pEep->u8BrightnessMax));
+                    pLedStripe->vSetColor(-1);
+                    break;
                 case nIncremental:
                 default:
                     // change brightness via ++/--
