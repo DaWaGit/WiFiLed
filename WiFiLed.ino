@@ -7,23 +7,28 @@
 #define CLASS_NAME       "WiFiLed"
 #define ENABLE_WLAN      1
 
-#include "Eep.h"
-#include "LedStripe.h"
-#include "Buttons.h"
-#include "PT1.h"
+#include "Eep.h"        // EEP interface
+#include "LedStripe.h"  // LED controll
+#include "Buttons.h"    // button handling
+#include "PT1.h"        // PT1 damping
 #if ENABLE_WLAN
-#include "Wlan.h"
+    #include "Wlan.h"   // WiFi Interface
 #endif
-#include "Version.h"
-#include "Utils.h"
-#include "DebugLevel.h"
+#include "Version.h"    // version definition
+#include "Utils.h"      // useful utils
+#include "DebugLevel.h" // debug level definiton
+#include "NtpTime.h"    // NTP time
 
+//=======================================================================
+//                               Globals
+//=======================================================================
 Eep oEep(DEBUG_LEVEL);             // create the Eep object
 LedStripe oLedStripe(DEBUG_LEVEL); // create the LedStrip object
 Buttons oButtons(DEBUG_LEVEL);     // create the Button object
 #if ENABLE_WLAN
-    Wlan oWlan(DEBUG_LEVEL); // create Wlan object
+    Wlan oWlan(DEBUG_LEVEL);       // create Wlan object
 #endif
+NtpTime oNtpTime(DEBUG_LEVEL);     // create an NTP time object
 
 //=======================================================================
 //                               Setup
@@ -41,9 +46,17 @@ void setup() {
 #if ENABLE_WLAN
     oWlan.vInit(&oButtons , &oLedStripe, &oEep); // init Wlan+Webserver
 #endif
+
+    oNtpTime.vInit(
+        "CET-1CEST,M3.5.0,M10.5.0/3", // Berlin TimeZone see: https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
+        "ptbtime1.ptb.de",            // NTP server 1..3 e.g. "at.pool.ntp.org "
+        "ptbtime2.ptb.de",
+        "ptbtime3.ptb.de",
+        8.959015, 50.041904 // LATITUDE=50.041904; LONGITUDE=8.959015; position Fußwasser 14, 63500 Seligenstadt
+    );
 }
 //=======================================================================
-//                MAIN LOOP
+//                               MAIN LOOP
 //=======================================================================
 void loop() {
     oButtons.vLoop();   // detect and handle Button events
@@ -51,6 +64,7 @@ void loop() {
 #if ENABLE_WLAN
     oWlan.vLoop();      // check Wlan status, reconnect
 #endif
+    oNtpTime.vLoop();
 }
 
 //=======================================================================

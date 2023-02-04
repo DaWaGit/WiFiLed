@@ -2,7 +2,7 @@
 #define DebugLevel_h
 
 //                              +-------- global debug output
-//                              |+------- unused
+//                              |+------- time events
 //                              ||+------ WebServer events
 //                              |||+----- WLAN events
 //                              ||||+---- EEP events
@@ -10,8 +10,9 @@
 //                              ||||||+-- LED events
 //                              |||||||+- Button events
 //                              ||||||||
-#define DEBUG_LEVEL            B00110011 // current enabled debug level
+#define DEBUG_LEVEL            B01110011 // current enabled debug level
 #define DEBUG_GLOBAL_OUTPUT    B10000000 // enable serial debug output
+#define DEBUG_TIME_EVENTS      B01000000 // enable NTP time events
 #define DEBUG_WEBSERVER_EVENTS B00100000 // show all web server events
 #define DEBUG_WLAN_EVENTS      B00010000 // show all WiFi events
 #define DEBUG_EEP_EVENTS       B00001000 // show all EEP events to read/write values
