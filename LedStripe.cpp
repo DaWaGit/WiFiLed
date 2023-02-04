@@ -368,15 +368,17 @@ void LedStripe::vLoop() {
             if (boNewSwitchMode) {
                 if ((u8NewSwitchBrightness - 1) <= u8DampedBrightness) {
                     boCurrentSwitchMode = boNewSwitchMode;
+                    boUpdateWebClients = true;
                 }
             } else {
                 if ((u8DampedBrightness + 1) <= pEep->u8BrightnessMin) {
                     boCurrentSwitchMode = boNewSwitchMode;
                     strip->Begin();
                     strip->Show();
+                    boUpdateWebClients = true;
                 }
             }
-            if (pEep->u8Speed) boUpdateWebClients = true;
+            //if (pEep->u8Speed) boUpdateWebClients = true;
         }
         else if (   (boCurrentSwitchMode || boNewSwitchMode)
                 && pEep->u8Speed) {
@@ -386,11 +388,11 @@ void LedStripe::vLoop() {
             switch ((tColorMode)pEep->u8ColorMode) {
                 case nMonochrome: // use the same color of all pixels, but shift the color smoothly
                     vSetMonochrome(pEep->u16Hue, pEep->u8Saturation, pEep->u8Brightness, pEep->u8Speed);
-                    boUpdateWebClients = true;
+                    //boUpdateWebClients = true;
                     break;
                 case nRainbow: // draw a rainbow and shift/move the colors
                     vSetRainbow(pEep->u16Hue, pEep->u8Saturation, pEep->u8Brightness, pEep->u8Speed);
-                    boUpdateWebClients = true;
+                    //boUpdateWebClients = true;
                     break;
                 case nRandom: // change for each pixel color individually, but smooth
                     vSetRandom(pEep->u8Saturation, pEep->u8Brightness, false, pEep->u8Speed);
