@@ -4,7 +4,7 @@
 #include "DebugLevel.h"
 
 #define CLASS_NAME "NtpTime"
-#define INTERVAL 1000 // update time every x ms
+#define INTERVAL 1000 // update stLocal, SunRise, SunSet automatically every x ms
 
 //=============================================================================
 NtpTime::NtpTime(uint8_t u8NewDebugLevel) {
@@ -103,55 +103,55 @@ void NtpTime::vLoop() {
     }
 }
 
-double NtpTime::dJulianDate (int y, int m, int d) {        // Gregorianischer Kalender
-  if (m <= 2) {
-    m = m + 12;
-    y = y - 1;
-  }
-  int gregorian = (y / 400) - (y / 100) + (y / 4); // Gregorianischer Kalender
-  return 2400000.5 + 365.0 * y - 679004.0 + gregorian + (30.6001 * (m + 1)) + d + 12.0 / 24.0;
+double NtpTime::dJulianDate (int y, int m, int d) {
+    if (m <= 2) {
+        m = m + 12;
+        y = y - 1;
+    }
+    int gregorian = (y / 400) - (y / 100) + (y / 4);
+    return 2400000.5 + 365.0 * y - 679004.0 + gregorian + (30.6001 * (m + 1)) + d + 12.0 / 24.0;
 }
 
 double NtpTime::dInPi(double x) {
-  int n = x / TWO_PI;
-  x = x - n * TWO_PI;
-  if (x < 0) x += TWO_PI;
-  return x;
+    int n = x / TWO_PI;
+    x = x - n * TWO_PI;
+    if (x < 0) x += TWO_PI;
+    return x;
 }
 
 double NtpTime::dCalculateEOT(double &DK, double T) {
-  double RAm = 18.71506921 + 2400.0513369 * T + (2.5862e-5 - 1.72e-9 * T) * T * T;
-  double M  = dInPi(TWO_PI * (0.993133 + 99.997361 * T));
-  double L  = dInPi(TWO_PI * (  0.7859453 + M / TWO_PI + (6893.0 * sin(M) + 72.0 * sin(2.0 * M) + 6191.2 * T) / 1296.0e3));
-  double e = DEG_TO_RAD * (23.43929111 + (-46.8150 * T - 0.00059 * T * T + 0.001813 * T * T * T) / 3600.0);    // Neigung der Erdachse
-  double RA = atan(tan(L) * cos(e));
-  if (RA < 0.0) RA += PI;
-  if (L > PI) RA += PI;
-  RA = 24.0 * RA / TWO_PI;
-  DK = asin(sin(e) * sin(L));
-  RAm = 24.0 * dInPi(TWO_PI * RAm / 24.0) / TWO_PI;
-  double dRA = RAm - RA;
-  if (dRA < -12.0) dRA += 24.0;
-  if (dRA > 12.0) dRA -= 24.0;
-  dRA = dRA * 1.0027379;
-  return dRA ;
+    double RAm = 18.71506921 + 2400.0513369 * T + (2.5862e-5 - 1.72e-9 * T) * T * T;
+    double M  = dInPi(TWO_PI * (0.993133 + 99.997361 * T));
+    double L  = dInPi(TWO_PI * (  0.7859453 + M / TWO_PI + (6893.0 * sin(M) + 72.0 * sin(2.0 * M) + 6191.2 * T) / 1296.0e3));
+    double e = DEG_TO_RAD * (23.43929111 + (-46.8150 * T - 0.00059 * T * T + 0.001813 * T * T * T) / 3600.0);    // Neigung der Erdachse
+    double RA = atan(tan(L) * cos(e));
+    if (RA < 0.0) RA += PI;
+    if (L > PI) RA += PI;
+    RA = 24.0 * RA / TWO_PI;
+    DK = asin(sin(e) * sin(L));
+    RAm = 24.0 * dInPi(TWO_PI * RAm / 24.0) / TWO_PI;
+    double dRA = RAm - RA;
+    if (dRA < -12.0) dRA += 24.0;
+    if (dRA > 12.0) dRA -= 24.0;
+    dRA = dRA * 1.0027379;
+    return dRA ;
 }
 
 tstSunTime NtpTime::stGetSunTime(double sunTime) {
-  static tstSunTime newSunTime;
+    static tstSunTime newSunTime;
 
-  if (sunTime < 0) sunTime += 24;
-  else if (sunTime >= 24) sunTime -= 24;
-  newSunTime.u8Minute = 60 * (sunTime - static_cast<int>(sunTime)) + 0.5;
-  newSunTime.u8Hour = sunTime;
-  if (newSunTime.u8Minute >= 60) {
-    newSunTime.u8Minute -= 60;
-    newSunTime.u8Hour++;
-  }
-  else if (newSunTime.u8Minute < 0) {
-    newSunTime.u8Minute += 60;
-    newSunTime.u8Hour--;
-    if (newSunTime.u8Hour < 0) newSunTime.u8Hour += 24;
-  }
-  return newSunTime;
+    if (sunTime < 0) sunTime += 24;
+    else if (sunTime >= 24) sunTime -= 24;
+    newSunTime.u8Minute = 60 * (sunTime - static_cast<int>(sunTime)) + 0.5;
+    newSunTime.u8Hour = sunTime;
+    if (newSunTime.u8Minute >= 60) {
+        newSunTime.u8Minute -= 60;
+        newSunTime.u8Hour++;
+    }
+    else if (newSunTime.u8Minute < 0) {
+        newSunTime.u8Minute += 60;
+        newSunTime.u8Hour--;
+        if (newSunTime.u8Hour < 0) newSunTime.u8Hour += 24;
+    }
+    return newSunTime;
 }
