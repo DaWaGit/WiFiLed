@@ -8,13 +8,14 @@
 #include "Eep.h"
 #include "LedStripe.h"
 #include "Buttons.h"
+#include "NtpTime.h"
 
 #define DEVICE_NAME "WiFiLed" // define the device name
 
 class Wlan {
     public:
         Wlan(uint8_t);
-        void vInit(class Buttons *, class LedStripe *, class Eep *);
+        void vInit(class Buttons *, class LedStripe *, class Eep *, class NtpTime *);
         void vLoop();
         IPAddress localIP();
 

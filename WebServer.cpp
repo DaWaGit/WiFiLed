@@ -17,11 +17,13 @@ WebServer::WebServer(int iWebUrlPort, int iNewWebSocketPort) {
 }
 
 //=======================================================================
-void WebServer::vInit(class Buttons *pNewButtons, class LedStripe *pNewLedStripe, class Eep *pNewEep, uint8_t u8NewDebugLevel) {
+void WebServer::vInit(class Buttons *pNewButtons, class LedStripe *pNewLedStripe, class Eep *pNewEep, class NtpTime *pNewNtpTime, uint8_t u8NewDebugLevel)
+{
 
     pEep         = pNewEep;         // eep class
     pLedStripe   = pNewLedStripe;   // store LedStripe
     pButtons     = pNewButtons;     // store Buttons
+    pNtpTime     = pNewNtpTime;     // store NTP time
     u8DebugLevel = u8NewDebugLevel; // store debug level
 
     // Initialize SPIFFS
@@ -46,6 +48,12 @@ void WebServer::vInit(class Buttons *pNewButtons, class LedStripe *pNewLedStripe
     });
     pWebServer->on("/favicon.ico", HTTP_GET, [](AsyncWebServerRequest *request) {
         request->send(SPIFFS, "/favicon.ico", "image/x-icon");
+    });
+    pWebServer->on("/sun.svg", HTTP_GET, [](AsyncWebServerRequest *request) {
+        request->send(SPIFFS, "/sun.svg", "image/svg+xml");
+    });
+    pWebServer->on("/moon.svg", HTTP_GET, [](AsyncWebServerRequest *request) {
+        request->send(SPIFFS, "/moon.svg", "image/svg+xml");
     });
     pWebServer->on("/jquery-3.4.1.slim.min.js", HTTP_GET, [](AsyncWebServerRequest *request) {
         request->send(SPIFFS, "/jquery-3.4.1.slim.min.js", "text/javascript");
@@ -167,13 +175,19 @@ void WebServer::vWebSocketEvent(uint8_t clientNumber,
                 vSendColorMode(clientNumber, false);
                 vSendDistanceSensorEnabled(clientNumber, false);
                 vSendMotionSensorEnabled(clientNumber, false);
+/*
             } else if (strstr((char *)payload, "setB")) {
                 // change hue, saturation, brightness via web page
                 String sPayload    = String((char *)payload);
                 int start          = sPayload.indexOf("setB:") + 5;
                 int end            = sPayload.length();
-                pEep->u8Brightness = (uint8_t) sPayload.substring(start, end).toInt();
+                if (pNtpTime->stLocal.boSunHasRisen) {
+                    pEep->u8BrightnessDay = (uint8_t) sPayload.substring(start, end).toInt();
+                } else {
+                    pEep->u8BrightnessNight = (uint8_t) sPayload.substring(start, end).toInt();
+                }
                 vSendBrightness(clientNumber, true);
+*/
             } else if (strstr((char *)payload, "set=")) {
                 // change hue, saturation, brightness via web page
                 String sPayload = String((char *)payload);
@@ -212,11 +226,19 @@ void WebServer::vWebSocketEvent(uint8_t clientNumber,
                 end   = sPayload.length();
                 pEep->vSetMotionOffDelay((uint8_t)sPayload.substring(start, end).toInt(), true); // store the new value in EEP
 
+                start = sPayload.indexOf("bDay:") + 5;
+                end = sPayload.length();
+                pEep->vSetBrightnessDay((uint8_t)sPayload.substring(start, end).toInt(), true); // store the new value in EEP
+
+                start = sPayload.indexOf("bNight:") + 7;
+                end = sPayload.length();
+                pEep->vSetBrightnessNight((uint8_t)sPayload.substring(start, end).toInt(), true); // store the new value in EEP
+
                 bool boSwitchStatus = pLedStripe->boGetSwitchStatus(); // get the current switch status
                 if (boSwitchStatus) pLedStripe->vTurn(false, true);    // set the last switch status again
-                pLedStripe->vInit(pEep);                               // reinitialize the the new LedCount
+                pLedStripe->vInit(pEep, pNtpTime);                     // reinitialize the the new LedCount
                 if (boSwitchStatus) pLedStripe->vTurn(boSwitchStatus, true); // set the last switch status again
-                vSendStripeStatus(clientNumber, true);                       // update values for every client expect himself
+                vSendStripeStatus(clientNumber, true); // update values for every client expect himself
             } else if (strstr((char *)payload, "Ssid")) {
                 // WiFi config changed via web page
                 String sPayload = String((char *)payload);
@@ -385,14 +407,14 @@ void WebServer::vSendColorMode(int clientNumber, bool boToAllClients) {
     }
 }
 
+/*
 //=======================================================================
 // send the current color mode to all active clients
 void WebServer::vSendBrightness(int clientNumber, bool boToAllClients) {
     char msg_buf[100];
 
     // get the current stripe status
-    sprintf(msg_buf, "setB:%d",
-            pEep->u8Brightness);
+    sprintf(msg_buf, "setB:%dbDay:%dbNight:%d", pNtpTime->stLocal.boSunHasRisen ? pEep->u8BrightnessDay : pEep->u8BrightnessNight, pEep->u8BrightnessDay, pEep->u8BrightnessNight);
     if (boToAllClients) {
         // send to all clients expect the selected one
         vSendBufferToAllClients(msg_buf, clientNumber);
@@ -401,18 +423,21 @@ void WebServer::vSendBrightness(int clientNumber, bool boToAllClients) {
         vSendBufferToOneClient(msg_buf, clientNumber);
     }
 }
-
+*/
 //=======================================================================
 // send the current stripe status to all active clients
 void WebServer::vSendStripeStatus(int clientNumber, bool boToAllClients) {
     char msg_buf[100];
 
     // get the current stripe status
-    sprintf(msg_buf, "sw:%dh:%ds:%db:%d",
+    sprintf(msg_buf, "sw:%dh:%ds:%db:%dbDay:%dbNight:%dDay:%d",
             pLedStripe->boGetSwitchStatus(),
             pEep->u16Hue,
             pEep->u8Saturation,
-            pEep->u8Brightness);
+            pNtpTime->stLocal.boSunHasRisen ? pEep->u8BrightnessDay : pEep->u8BrightnessNight,
+            pEep->u8BrightnessDay,
+            pEep->u8BrightnessNight,
+            pNtpTime->stLocal.boSunHasRisen);
     if (boToAllClients) {
         // send to all clients expect the selected one
         vSendBufferToAllClients(msg_buf, clientNumber);

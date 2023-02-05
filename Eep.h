@@ -19,7 +19,8 @@ class Eep {
         void vSetCalibrationValue(uint16_t, bool);   // store distance sensor calibration value
         void vSetHue(uint16_t, bool);                // store hue value
         void vSetSaturation(uint8_t, bool);          // store saturation value
-        void vSetBrightness(uint8_t, bool);          // store brightness value
+        void vSetBrightnessDay(uint8_t, bool);       // store brightness value
+        void vSetBrightnessNight(uint8_t, bool);       // store brightness value
         void vSetDimMode(uint8_t, bool);             // store the new dim mode
         void vSetBrightnessMin(uint8_t, bool);       // store a new brightness min value
         void vSetBrightnessMax(uint8_t, bool);       // store a new brightness max value
@@ -34,7 +35,8 @@ class Eep {
         uint16_t u16CalibrationValue; // distance sensor calibration value (0..65535 default:200)
         uint16_t u16Hue;              // color hue (0..65535 default:0)
         uint8_t u8Saturation;         // color saturation value (0..65535 default:0)
-        uint8_t u8Brightness;         // color brightness (0..255 default_128)
+        uint8_t u8BrightnessDay;      // color brightness (0..255 default_128)
+        uint8_t u8BrightnessNight;    // color brightness (0..255 default_128)
         uint8_t u8BrightnessMin;      // LED min brightness (0..255 default:24)
         uint8_t u8BrightnessMax;      // LED max brightness (0..255 default:255)
         uint8_t u8DimMode;            // distancesensor dim mode (0:brightness ++/-- 1:brightness via distance default:1)

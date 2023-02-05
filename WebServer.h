@@ -20,11 +20,12 @@
 #include "Eep.h"
 #include "LedStripe.h"
 #include "Buttons.h"
+#include "NtpTime.h"
 
 class WebServer {
     public:
         WebServer(int, int);
-        void vInit(class Buttons *, class LedStripe *, class Eep *, uint8_t);
+        void vInit(class Buttons *, class LedStripe *, class Eep *, class NtpTime *, uint8_t);
         void vSetIp(IPAddress);
         void vLoop();
         void vSendStripeStatus(int, bool);
@@ -32,7 +33,7 @@ class WebServer {
     private:
         void vWebSocketEvent(uint8_t, WStype_t, uint8_t *, size_t);
         void vSendColorMode(int, bool);
-        void vSendBrightness(int, bool);
+//        void vSendBrightness(int, bool);
         void vSendDistanceSensorEnabled(int, bool);
         void vSendMotionSensorEnabled(int, bool);
         void vSendBufferToAllClients(char *, int);
@@ -40,6 +41,7 @@ class WebServer {
         class Eep *pEep;
         class LedStripe *pLedStripe;
         class Buttons *pButtons;
+        class NtpTime *pNtpTime;
         String sTemplateProcessor(const String &);
         AsyncWebServer *pWebServer;
         WebSocketsServer *pWebSocket;

@@ -10,6 +10,16 @@
 NtpTime::NtpTime(uint8_t u8NewDebugLevel) {
     u8DebugLevel = u8NewDebugLevel; // store debug level
 }
+/*
+//=============================================================================
+void NtpTime::vSetWebServer(class WebServer *pNewWebServer) {
+    pWebServer = pNewWebServer;
+}
+*/
+//=============================================================================
+void NtpTime::vSetLedStripe(class LedStripe *pNewLedStripe) {
+    pLedStripe = pNewLedStripe;
+}
 
 //=============================================================================
 void NtpTime::vInit(char *timeZone, char *ntpServer1, char *ntpServer2, char *ntpServer3, double newLongitude, double newLatitude) {
@@ -17,16 +27,18 @@ void NtpTime::vInit(char *timeZone, char *ntpServer1, char *ntpServer2, char *nt
     latitude  = newLatitude;
     configTime(timeZone, ntpServer1, ntpServer2, ntpServer3); // by default, the NTP will be started after 60 secs
 
-    char buffer[200];
-    sprintf(
-        buffer,
-        "TimeZone:'%s' NtpServer1:'%s' NtpServer2:'%s' NtpServer3:'%s'",
-        timeZone,
-        ntpServer1,
-        ntpServer2,
-        ntpServer3
-      );
-    vConsole(u8DebugLevel, DEBUG_TIME_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+    if (u8DebugLevel & DEBUG_TIME_EVENTS) {
+        char buffer[200];
+        sprintf(
+            buffer,
+            "TimeZone:'%s' NtpServer1:'%s' NtpServer2:'%s' NtpServer3:'%s'",
+            timeZone,
+            ntpServer1,
+            ntpServer2,
+            ntpServer3
+        );
+        vConsole(u8DebugLevel, DEBUG_TIME_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+    }
 }
 
 //=============================================================================
@@ -76,13 +88,19 @@ void NtpTime::vLoop() {
         // check if sun above the horizon
         uint16_t u16CurrentTime = ((uint16_t)stLocal.u8Hour * (uint16_t)100) + (uint16_t)stLocal.u8Minute; // current time in hhmm
         if (u16CurrentTime > u16SunRise && u16CurrentTime < u16SunSet) {
-            stLocal.boSunHasRisen = true;
+            if (!stLocal.boSunHasRisen) {
+                stLocal.boSunHasRisen = true;
+                pLedStripe->vUpdateDayLight();
+            }
         } else {
-            stLocal.boSunHasRisen = false;
+            if (stLocal.boSunHasRisen) {
+                stLocal.boSunHasRisen = false;
+                pLedStripe->vUpdateDayLight();
+            }
         }
 
-        char buffer[200];
         if (u8DebugLevel & DEBUG_TIME_EVENTS) {
+            char buffer[200];
             sprintf(
                 buffer,
                 "%02d:%02d:%02d %02d.%02d.%04d / %s / SunRise: %02d:%02d SunSet: %02d.%02d / sun %s the horizon",

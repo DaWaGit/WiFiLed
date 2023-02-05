@@ -42,7 +42,7 @@ IPAddress Wlan::localIP() {
 }
 
 //=============================================================================
-void Wlan::vInit(class Buttons *pNewButtons, class LedStripe *pNewLedStripe, class Eep *pNewEep) {
+void Wlan::vInit(class Buttons *pNewButtons, class LedStripe *pNewLedStripe, class Eep *pNewEep, class NtpTime *pNewNtpTime) {
 
     pEep = pNewEep;
     pEep->vGetWifiSsid(acWifiSsid);
@@ -52,7 +52,8 @@ void Wlan::vInit(class Buttons *pNewButtons, class LedStripe *pNewLedStripe, cla
 
 #if ENABLE_WEBSERVER
         pLedStripe = pNewLedStripe;
-        oWebServer.vInit(pButtons, pLedStripe, pEep, u8WiFiDebugLevel); // init WebServer
+        oWebServer.vInit(pButtons, pLedStripe, pEep, pNewNtpTime, u8WiFiDebugLevel); // init WebServer
+        //pNewNtpTime->vSetWebServer(&oWebServer);
 #endif
 
     pinMode(LED_BUILTIN, OUTPUT); // use build in LED to show the WiFi status

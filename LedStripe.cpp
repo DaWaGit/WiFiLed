@@ -20,8 +20,9 @@ LedStripe::LedStripe(uint8_t u8NewDebugLevel) {
 }
 
 //=============================================================================
-void LedStripe::vInit(class Eep *pNewEep) {
-    pEep = pNewEep;
+void LedStripe::vInit(class Eep *pNewEep, class NtpTime *pNewNtpTime) {
+    pEep     = pNewEep;
+    pNtpTime = pNewNtpTime;
 
     // For Esp8266, the Pin is omitted and it uses GPIO3 due to DMA hardware use.
     strip = new NeoPixelBus<NeoGrbFeature, Neo800KbpsMethod>(pEep->u16LedCount);
@@ -34,10 +35,9 @@ void LedStripe::vInit(class Eep *pNewEep) {
         sprintf(buffer, " LedCount:%d", pEep->u16LedCount);
         sprintf(buffer, "%s Hue:0x%04x", buffer, pEep->u16Hue);
         sprintf(buffer, "%s Sat:0x%02x", buffer, pEep->u8Saturation);
-        sprintf(buffer, "%s Bri:0x%02x", buffer, pEep->u8Brightness);
+        sprintf(buffer, "%s Bri:0x%02x", buffer, u8GetBrightness());
         vConsole( u8DebugLevel, DEBUG_LED_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
     }
-
 }
 
 //=============================================================================
@@ -67,16 +67,16 @@ void LedStripe::vSetColor(uint8_t clientNumber){
         // when stripe is on
         switch ((tColorMode)pEep->u8ColorMode) {
             case nMonochrome: // use the same color of all pixels, but shift the color smoothly
-                vSetMonochrome(pEep->u16Hue, pEep->u8Saturation, pEep->u8Brightness, pEep->u8Speed);
+                vSetMonochrome(pEep->u16Hue, pEep->u8Saturation, u8GetBrightness(), pEep->u8Speed);
                 break;
             case nRainbow: // draw a rainbow and shift/move the colors
-                vSetRainbow(pEep->u16Hue, pEep->u8Saturation, pEep->u8Brightness, pEep->u8Speed);
+                vSetRainbow(pEep->u16Hue, pEep->u8Saturation, u8GetBrightness(), pEep->u8Speed);
                 break;
             case nRandom: // change for each pixel color individually, but smooth
-                vSetRandom(pEep->u8Saturation, pEep->u8Brightness, true, pEep->u8Speed);
+                vSetRandom(pEep->u8Saturation, u8GetBrightness(), true, pEep->u8Speed);
                 break;
             case nMovingPoint: // change for each pixel color individually, but smooth
-                vSetMovingPoint(pEep->u16Hue, pEep->u8Saturation, pEep->u8Brightness, false);
+                vSetMovingPoint(pEep->u16Hue, pEep->u8Saturation, u8GetBrightness(), false);
                 break;
             default:
                 break;
@@ -93,7 +93,8 @@ void LedStripe::vTurn( bool boNewMode, bool boFast) {
         // turn off, store the current values
         pEep->vSetHue(pEep->u16Hue, true);
         pEep->vSetSaturation(pEep->u8Saturation, true);
-        pEep->vSetBrightness(pEep->u8Brightness, true);
+        pEep->vSetBrightnessDay(pEep->u8BrightnessDay, true);
+        pEep->vSetBrightnessNight(pEep->u8BrightnessNight, true);
     } else {
         boInitRandomHue = true;
     }
@@ -106,17 +107,17 @@ void LedStripe::vTurn( bool boNewMode, bool boFast) {
             vConsole( u8DebugLevel, DEBUG_LED_EVENTS, CLASS_NAME, __FUNCTION__, "fast ON" );
             switch ((tColorMode)pEep->u8ColorMode) {
                 case nMonochrome: // use the same color of all pixels, but shift the color smoothly
-                    vSetMonochrome(pEep->u16Hue, pEep->u8Saturation, pEep->u8Brightness, pEep->u8Speed);
+                    vSetMonochrome(pEep->u16Hue, pEep->u8Saturation, u8GetBrightness(), pEep->u8Speed);
                     break;
                 case nRainbow: // draw a rainbow and shift/move the colors
-                    vSetRainbow(pEep->u16Hue, pEep->u8Saturation, pEep->u8Brightness, pEep->u8Speed);
+                    vSetRainbow(pEep->u16Hue, pEep->u8Saturation, u8GetBrightness(), pEep->u8Speed);
                     break;
                 case nRandom: // change for each pixel color individually, but smooth
-                    vSetRandom(pEep->u8Saturation, pEep->u8Brightness, boInitRandomHue, pEep->u8Speed);
+                    vSetRandom(pEep->u8Saturation, u8GetBrightness(), boInitRandomHue, pEep->u8Speed);
                     boInitRandomHue = false;
                     break;
                 case nMovingPoint: // change for each pixel color individually, but smooth
-                    vSetMovingPoint(pEep->u16Hue, pEep->u8Saturation, pEep->u8Brightness, false);
+                    vSetMovingPoint(pEep->u16Hue, pEep->u8Saturation, u8GetBrightness(), false);
                     break;
                 default:
                     break;
@@ -133,13 +134,23 @@ void LedStripe::vTurn( bool boNewMode, bool boFast) {
         if (boNewSwitchMode) {
             vConsole( u8DebugLevel, DEBUG_LED_EVENTS, CLASS_NAME, __FUNCTION__, "smooth ON" );
             cOnOffDamp->vInitDampVal(0);
-            u8NewSwitchBrightness = pEep->u8Brightness;
+            u8NewSwitchBrightness = u8GetBrightness();
         } else {
             vConsole( u8DebugLevel, DEBUG_LED_EVENTS, CLASS_NAME, __FUNCTION__, "smooth OFF" );
-            cOnOffDamp->vInitDampVal(pEep->u8Brightness);
+            cOnOffDamp->vInitDampVal(u8GetBrightness());
             u8NewSwitchBrightness = 0;
         }
     }
+}
+
+//=============================================================================
+void LedStripe::vUpdateDayLight() {
+    vSetValues(
+        pEep->u16Hue,
+        pEep->u8Saturation,
+        pNtpTime->stLocal.boSunHasRisen ? pEep->u8BrightnessDay : pEep->u8BrightnessNight
+    );
+    if (pWebServer) pWebServer->vSendStripeStatus(-1, true); // update values for every web client
 }
 
 //=============================================================================
@@ -148,9 +159,13 @@ void LedStripe::vSetValues(
     uint8_t u8NewSaturation,
     uint8_t u8NewBrightness)
 {
-    pEep->u16Hue = u16NewHue;
-    pEep->u8Saturation = u8NewSaturation;
-    pEep->u8Brightness = u8NewBrightness;
+    pEep->u16Hue          = u16NewHue;
+    pEep->u8Saturation    = u8NewSaturation;
+    if (pNtpTime->stLocal.boSunHasRisen) {
+        pEep->u8BrightnessDay = u8NewBrightness;
+    } else {
+        pEep->u8BrightnessNight = u8NewBrightness;
+    }
 }
 
 //=============================================================================
@@ -387,19 +402,19 @@ void LedStripe::vLoop() {
             // manage color mode
             switch ((tColorMode)pEep->u8ColorMode) {
                 case nMonochrome: // use the same color of all pixels, but shift the color smoothly
-                    vSetMonochrome(pEep->u16Hue, pEep->u8Saturation, pEep->u8Brightness, pEep->u8Speed);
+                    vSetMonochrome(pEep->u16Hue, pEep->u8Saturation, u8GetBrightness(), pEep->u8Speed);
                     //boUpdateWebClients = true;
                     break;
                 case nRainbow: // draw a rainbow and shift/move the colors
-                    vSetRainbow(pEep->u16Hue, pEep->u8Saturation, pEep->u8Brightness, pEep->u8Speed);
+                    vSetRainbow(pEep->u16Hue, pEep->u8Saturation, u8GetBrightness(), pEep->u8Speed);
                     //boUpdateWebClients = true;
                     break;
                 case nRandom: // change for each pixel color individually, but smooth
-                    vSetRandom(pEep->u8Saturation, pEep->u8Brightness, false, pEep->u8Speed);
+                    vSetRandom(pEep->u8Saturation, u8GetBrightness(), false, pEep->u8Speed);
                     break;
                 case nMovingPoint: // change for each pixel color individually, but smooth
                     delay((255 - pEep->u8Speed)<<1); // wait max 500ms
-                    vSetMovingPoint(pEep->u16Hue, pEep->u8Saturation, pEep->u8Brightness, true);
+                    vSetMovingPoint(pEep->u16Hue, pEep->u8Saturation, u8GetBrightness(), true);
                     break;
                 default:
                     break;
@@ -409,4 +424,9 @@ void LedStripe::vLoop() {
             pWebServer->vSendStripeStatus(-1, true); // update values for every web client
         }
     }
+}
+
+//=============================================================================
+uint8_t LedStripe::u8GetBrightness() {
+    return pNtpTime->stLocal.boSunHasRisen ? pEep->u8BrightnessDay : pEep->u8BrightnessNight;
 }

@@ -89,6 +89,13 @@
         text-align: left;
         width: 90%;
       }
+      .dayNight {
+        position:absolute;
+        top:0px;
+        left:0px;
+        width:32px;
+        z-index: 2000;
+      }
     </style>
     <script type="text/javascript">
       var url = "`wsUrl`";
@@ -96,6 +103,7 @@
       var hue = 0;
       var sat = 0;
       var bri = 0;
+      var day = 0;
       var reconnectTimer;
 
       //#########################################
@@ -114,6 +122,8 @@
         if (!url.includes('wsUrl')) {
           wsConnect(url);
         }
+        $("#sun").detach().appendTo("#colorSelector");  // move icon to parent colorSelector
+        $("#moon").detach().appendTo("#colorSelector"); // move icon to parent colorSelector
       }
       //#########################################
       // select an element: color/wifi/...
@@ -160,7 +170,7 @@
         console.log("[WebSocket] Rx: " + evt.data);
         //-----------------------------
         // new color
-        var result = evt.data.match(/^sw:(\d+)h:(\d+)s:(\d+)b:(\d+)$/i);
+        var result = evt.data.match(/^sw:(\d+)h:(\d+)s:(\d+)b:(\d+)bDay:(\d+)bNight:(\d+)Day:(\d+)$/i);
         if (result) {
           boSendToDevice = false;
           if (Number(result[1])) {
@@ -179,6 +189,16 @@
               v: bri
             }
           );
+          $("#bDay").prop('value', Number(result[5]));   // set day brightness
+          $("#bNight").prop('value', Number(result[6])); // set night brigntness
+          day = Number(result[7]);
+          if (day) {
+            $('#sun').css('visibility', 'visible');
+            $('#moon').css('visibility', 'hidden');
+          } else {
+            $('#sun').css('visibility', 'hidden');
+            $('#moon').css('visibility', 'visible');
+          }
           return;
         }
         //-----------------------------
@@ -218,9 +238,10 @@
           }
           return;
         }
+/*
         //-----------------------------
         // new brightness
-        result = evt.data.match(/^setB:(\d+)$/i);
+        result = evt.data.match(/^setB:(\d+)bDay:(\d+)bNight(\d+)$/i);
         if (result) {
           boSendToDevice = false;
           $('#color-block').wheelColorPicker(
@@ -231,8 +252,11 @@
               v: Number(result[1]) / 0xff
             }
           );
+          $("#bDay").prop('value', Number(result[2]));   // set day brightness
+          $("#bNight").prop('value', Number(result[3])); // set night brigntness
           return;
         }
+*/
       }
       //#########################################
       // Called when a WebSocket error occurs
@@ -283,7 +307,19 @@
           doSend("on");
         }
       }
-
+      //#########################################
+      function toggleBrightness() {
+        bri = (day ? Number(document.getElementById("bDay").value) : Number(document.getElementById("bNight").value)) / 0xff;
+        $('#color-block').wheelColorPicker(
+          'setColor',
+          {
+            h: $('#color-block').wheelColorPicker('color').h,
+            s: $('#color-block').wheelColorPicker('color').s,
+            v: bri
+          }
+        );
+      }
+      //#########################################
       // Call the init function as soon as the page loads
       window.addEventListener("load", init, false);
     </script>
@@ -303,9 +339,10 @@
           </table>
         </div>
         <br>
-        <input id="color-block" type="text" value="#ffffff" data-wheelcolorpicker data-wcp-format="css"
-          data-wcp-layout="block" data-wcp-sliders="wv" data-wcp-cssClass="config1 config2" data-wcp-autoResize="false" />
-        <br>
+        <div id="colorSelector" style="width:360px;position:relative;">
+          <input id="color-block" type="text" value="#ffffff" data-wheelcolorpicker data-wcp-format="css"
+            data-wcp-layout="block" data-wcp-sliders="wv" data-wcp-cssClass="config1 config2" data-wcp-autoResize="false" />
+        </div>
         <div class="config1 config2" style="display: inline-block;"">
           <table style=" width:100%; height: 30px; border-collapse: collapse;">
             <tbody>
@@ -397,13 +434,15 @@
                 <td class="value"><input type="number" min="0" max="255" placeholder="0..255" id="bMax" name="bMax" value="`bMax`"></td>
               </tr>
               <tr>
-                <td class="value-name">&nbsp;</td><td class="value">&nbsp;</td>
+                <td class="value-name">bright. <img src="sun.svg" height="32px" style="filter: invert(50%) sepia(50%) saturate(0%) hue-rotate(0deg) brightness(87%) contrast(156%);"/></td>
+                <td class="value"><input type="number" min="0" max="255" placeholder="0..255" id="bDay" name="bDay" value=""></td>
               </tr>
               <tr>
-                <td class="value-name">&nbsp;</td><td class="value">&nbsp;</td>
+                <td class="value-name">bright. <img src="moon.svg" height="32px" style="filter: invert(50%) sepia(50%) saturate(0%) hue-rotate(0deg) brightness(87%) contrast(156%);"/></td>
+                <td class="value"><input type="number" min="0" max="255" placeholder="0..255" id="bNight" name="bNight" value=""></td>
               </tr>
               <tr>
-                <td class="value-name">&nbsp;</td><td class="value"><button class="btn" onclick='doSend("ledCount:"+document.getElementById("ledCount").value+"bMin:"+document.getElementById("bMin").value+"bMax:"+document.getElementById("bMax").value+"offDelay:"+(Number(document.getElementById("offDelay").value)-4));'>Success</button></td>
+                <td class="value-name">&nbsp;</td><td class="value"><button class="btn" onclick='toggleBrightness();doSend("ledCount:"+document.getElementById("ledCount").value+"bMin:"+document.getElementById("bMin").value+"bMax:"+document.getElementById("bMax").value+"offDelay:"+(Number(document.getElementById("offDelay").value)-4)+"bDay:"+Number(document.getElementById("bDay").value)+"bNight:"+Number(document.getElementById("bNight").value));'>Success</button></td>
               </tr>
             </tbody>
           </table>
@@ -417,7 +456,7 @@
               </tr>
               <tr>
                 <td class="value-name">motion off delay [s]</td>
-                <td class="value"><input type="number" min="4" max="255" placeholder="4..255" id="offDelay" name="offDelay" value="`offDelay`" onchange='if (Number(this.value)<4){this.value=4;};doSend("ledCount:"+document.getElementById("ledCount").value+"bMin:"+document.getElementById("bMin").value+"bMax:"+document.getElementById("bMax").value+"offDelay:"+(Number(document.getElementById("offDelay").value)-4));'></td>
+                <td class="value"><input type="number" min="4" max="255" placeholder="4..255" id="offDelay" name="offDelay" value="`offDelay`" onchange='if (Number(this.value)<4){this.value=4;};doSend("ledCount:"+document.getElementById("ledCount").value+"bMin:"+document.getElementById("bMin").value+"bMax:"+document.getElementById("bMax").value+"offDelay:"+(Number(document.getElementById("offDelay").value)-4)+"bDay:"+Number(document.getElementById("bDay").value)+"bNight:"+Number(document.getElementById("bNight").value));'></td>
               </tr>
               <tr>
                 <td class="value-name" width="200px">distance sensor</td>
@@ -442,6 +481,8 @@
         </div>
       </td></tr>
     </table>
+    <div class="dayNight" id="sun"><img src="sun.svg" height="32px" style="filter: invert(50%) sepia(50%) saturate(0%) hue-rotate(0deg) brightness(87%) contrast(156%);" /></div>
+    <div class="dayNight" id="moon"><img src="moon.svg" height="32px" style="filter: invert(50%) sepia(50%) saturate(0%) hue-rotate(0deg) brightness(87%) contrast(156%);" /></div>
     <script type="text/javascript">
       //#########################################
       $(function () {
@@ -457,6 +498,11 @@
           if (boSendToDevice) {
             // change the Stripe color
             doSend("set=h:" + (h * 0xffff).toFixed(0) + "s:"+ (s * 0xff).toFixed(0) + "b:" + (v * 0xff).toFixed(0));
+            if (day) {
+              $("#bDay").prop('value', (v * 0xff).toFixed(0));   // set day brightness
+            } else {
+              $("#bNight").prop('value', (v * 0xff).toFixed(0)); // set night brigntness
+            }
           } else {
             // do not update the device values
             boSendToDevice = true;

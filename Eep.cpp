@@ -11,8 +11,8 @@
 #define EepAdr_u16CalibrationValue   (EepAdr_u16LedCount + sizeof(uint16_t))
 #define EepAdr_u16Hue                (EepAdr_u16CalibrationValue + sizeof(uint16_t))
 #define EepAdr_u8Saturation          (EepAdr_u16Hue + sizeof(uint16_t))
-#define EepAdr_u8Brightness          (EepAdr_u8Saturation + sizeof(uint8_t))
-#define EepAdr_u8DimMode             (EepAdr_u8Brightness + sizeof(uint8_t))
+#define EepAdr_u8BrightnessDay       (EepAdr_u8Saturation + sizeof(uint8_t))
+#define EepAdr_u8DimMode             (EepAdr_u8BrightnessDay + sizeof(uint8_t))
 #define EepAdr_acWifiSsid            (EepAdr_u8DimMode + sizeof(uint8_t))
 #define EepAdr_acWifiPwd             (EepAdr_acWifiSsid + EepSizeWifiSsid)
 #define EepAdr_u8WiFiMode            (EepAdr_acWifiPwd + EepSizeWifiPwd)
@@ -23,7 +23,8 @@
 #define EepAdr_u8MotionOffDelay      (EepAdr_u8Speed + sizeof(uint8_t))
 #define EepAdr_u8DistanceSensorEnabled (EepAdr_u8MotionOffDelay + sizeof(uint8_t))
 #define EepAdr_u8MotionSensorEnabled   (EepAdr_u8DistanceSensorEnabled + sizeof(uint8_t))
-#define EepAdr_Last                  (EepAdr_u8MotionSensorEnabled + sizeof(uint8_t))
+#define EepAdr_u8BrightnessNight     (EepAdr_u8MotionSensorEnabled + sizeof(uint8_t))
+#define EepAdr_Last                  (EepAdr_u8BrightnessNight + sizeof(uint8_t))
 
 //=======================================================================
 Eep::Eep(uint8_t u8NewDebugLevel) {
@@ -48,7 +49,8 @@ void Eep::vInit() {
     EEPROM.get(EepAdr_u16LedCount,           u16LedCount);
     EEPROM.get(EepAdr_u16Hue,                u16Hue);
     EEPROM.get(EepAdr_u8Saturation,          u8Saturation);
-    EEPROM.get(EepAdr_u8Brightness,          u8Brightness);
+    EEPROM.get(EepAdr_u8BrightnessDay,       u8BrightnessDay);
+    EEPROM.get(EepAdr_u8BrightnessNight,     u8BrightnessNight);
     EEPROM.get(EepAdr_u8BrightnessMin,       u8BrightnessMin);
     EEPROM.get(EepAdr_u8BrightnessMax,       u8BrightnessMax);
     EEPROM.get(EepAdr_u8DimMode,             u8DimMode);
@@ -66,7 +68,8 @@ void Eep::vInit() {
         sprintf(buffer, "Eep.Read Adr:0x%04X u16LedCount           = %d ", EepAdr_u16LedCount, u16LedCount); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
         sprintf(buffer, "Eep.Read Adr:0x%04X u16Hue                = 0x%04X ", EepAdr_u16Hue, u16Hue); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
         sprintf(buffer, "Eep.Read Adr:0x%04X u8Saturation          = 0x%02X ", EepAdr_u8Saturation, u8Saturation); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X u8Brightness          = 0x%02X ", EepAdr_u8Brightness, u8Brightness); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u8BrightnessDay       = 0x%02X ", EepAdr_u8BrightnessDay, u8BrightnessDay); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u8BrightnessNight     = 0x%02X ", EepAdr_u8BrightnessNight, u8BrightnessNight); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
         sprintf(buffer, "Eep.Read Adr:0x%04X u8BrightnessMin       = %d ", EepAdr_u8BrightnessMin, u8BrightnessMin); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
         sprintf(buffer, "Eep.Read Adr:0x%04X u8BrightnessMax       = %d ", EepAdr_u8BrightnessMax, u8BrightnessMax); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
         sprintf(buffer, "Eep.Read Adr:0x%04X u8DimMode             = 0x%02X ", EepAdr_u8DimMode, u8DimMode); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
@@ -88,7 +91,8 @@ void Eep::vFactoryReset() {
     vSetLedCount(300, false);                   // number of current configured LEDs (0..65535 default:300)
     vSetHue(0, false);                          // color hue (0..65535 default:0)
     vSetSaturation(0, false);                   // color saturation value (0..65535 default:0)
-    vSetBrightness(128, false);                 // color brightness (0..255 default_128)
+    vSetBrightnessDay(128, false);              // color brightness (0..255 default_128)
+    vSetBrightnessNight(128, false);            // color brightness (0..255 default_128)
     vSetBrightnessMin(18, false);               // LED min brightness (0..255 default:24)
     vSetBrightnessMax(0xff, false);             // LED max brightness (0..255 default:255)
     vSetDimMode(1, false);                      // 0:brightness ++ or -- 1:brightness via distance
@@ -110,7 +114,8 @@ void Eep::vFactoryReset() {
         sprintf(buffer, "Eep.Write Adr:0x%04X u16LedCount           = %d ", EepAdr_u16LedCount, u16LedCount); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
         sprintf(buffer, "Eep.Write Adr:0x%04X u16Hue                = 0x%04X ", EepAdr_u16Hue, u16Hue); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
         sprintf(buffer, "Eep.Write Adr:0x%04X u8Saturation          = 0x%02X ", EepAdr_u8Saturation, u8Saturation); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Write Adr:0x%04X u8Brightness          = 0x%02X ", EepAdr_u8Brightness, u8Brightness); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Write Adr:0x%04X u8BrightnessDay       = 0x%02X ", EepAdr_u8BrightnessDay, u8BrightnessDay); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Write Adr:0x%04X u8BrightnessNight     = 0x%02X ", EepAdr_u8BrightnessNight, u8BrightnessNight); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
         sprintf(buffer, "Eep.Write Adr:0x%04X u8BrightnessMin       = %d ", EepAdr_u8BrightnessMin, u8BrightnessMin); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
         sprintf(buffer, "Eep.Write Adr:0x%04X u8BrightnessMax       = %d ", EepAdr_u8BrightnessMax, u8BrightnessMax); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
         sprintf(buffer, "Eep.Write Adr:0x%04X u8DimMode             = 0x%02X ", EepAdr_u8DimMode, u8DimMode); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
@@ -161,21 +166,40 @@ void Eep::vSetSaturation(uint8_t u8NewSaturation, bool boPrintConsole) {
     }
 }
 //=======================================================================
-void Eep::vSetBrightness(uint8_t u8NewBrightness, bool boPrintConsole) {
+void Eep::vSetBrightnessDay(uint8_t u8NewBrightness, bool boPrintConsole) {
     uint8_t  u8Brightness_Tmp = 0;
     bool     boUpdated        = false;
-    u8Brightness = u8NewBrightness;
-    EEPROM.get(EepAdr_u8Brightness, u8Brightness_Tmp);
-    if (u8Brightness_Tmp != u8Brightness) {
+    u8BrightnessDay = u8NewBrightness;
+    EEPROM.get(EepAdr_u8BrightnessDay, u8Brightness_Tmp);
+    if (u8Brightness_Tmp != u8BrightnessDay) {
         // at least one value changed
-        EEPROM.put(EepAdr_u8Brightness, u8Brightness);
+        EEPROM.put(EepAdr_u8BrightnessDay, u8BrightnessDay);
         EEPROM.commit();
         boUpdated = true;
     }
 
     if (u8DebugLevel & DEBUG_EEP_EVENTS && boPrintConsole) {
         char buffer[100];
-        sprintf(buffer, "Eep.Write Adr:0x%04X %s u8Brightness = 0x%02X ", EepAdr_u8Brightness, boUpdated ? "updated" : "unchanged", u8Brightness); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Write Adr:0x%04X %s u8BrightnessDay = 0x%02X ", EepAdr_u8BrightnessDay, boUpdated ? "updated" : "unchanged", u8BrightnessDay); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+    }
+}
+
+//=======================================================================
+void Eep::vSetBrightnessNight(uint8_t u8NewBrightness, bool boPrintConsole) {
+    uint8_t  u8Brightness_Tmp = 0;
+    bool     boUpdated        = false;
+    u8BrightnessNight = u8NewBrightness;
+    EEPROM.get(EepAdr_u8BrightnessNight, u8Brightness_Tmp);
+    if (u8Brightness_Tmp != u8BrightnessNight) {
+        // at least one value changed
+        EEPROM.put(EepAdr_u8BrightnessNight, u8BrightnessNight);
+        EEPROM.commit();
+        boUpdated = true;
+    }
+
+    if (u8DebugLevel & DEBUG_EEP_EVENTS && boPrintConsole) {
+        char buffer[100];
+        sprintf(buffer, "Eep.Write Adr:0x%04X %s u8BrightnessNight = 0x%02X ", EepAdr_u8BrightnessNight, boUpdated ? "updated" : "unchanged", u8BrightnessNight); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
     }
 }
 //=======================================================================

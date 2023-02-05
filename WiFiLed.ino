@@ -41,12 +41,12 @@ void setup() {
     Serial.setDebugOutput(DEBUG_LEVEL & DEBUG_GLOBAL_OUTPUT ? true : false);
 
     oEep.vInit();                       // download all EEP values
-    oLedStripe.vInit(&oEep);            // init LED strip
-    oButtons.vInit(&oLedStripe, &oEep); // init Buttons
+    oLedStripe.vInit(&oEep, &oNtpTime); // init LED strip
+    oButtons.vInit(&oLedStripe, &oEep, &oNtpTime); // init Buttons
 #if ENABLE_WLAN
-    oWlan.vInit(&oButtons , &oLedStripe, &oEep); // init Wlan+Webserver
+    oWlan.vInit(&oButtons, &oLedStripe, &oEep, &oNtpTime); // init Wlan+Webserver
 #endif
-
+    oNtpTime.vSetLedStripe(&oLedStripe);
     oNtpTime.vInit(
         "CET-1CEST,M3.5.0,M10.5.0/3", // Berlin TimeZone see: https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
         "ptbtime1.ptb.de",            // NTP server 1..3 e.g. "at.pool.ntp.org "

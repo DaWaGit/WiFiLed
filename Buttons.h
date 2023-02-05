@@ -4,6 +4,7 @@
 #include "LedStripe.h"
 #include "WebServer.h"
 #include "Eep.h"
+#include "NtpTime.h"
 
 enum tButtonStatus {
     nNone = 0,                  // no button pressed
@@ -22,7 +23,7 @@ enum tDimMode {
 class Buttons {
     public:
         Buttons(uint8_t);
-        void vInit(class LedStripe *, class Eep *);
+        void vInit(class LedStripe *, class Eep *, class NtpTime *);
         void vLoop();
         void vSet(tButtonStatus);
         void vSetWebServer(class WebServer *);
@@ -30,9 +31,11 @@ class Buttons {
     private:
         void vReadIrSensorValue();
         void vReadMotionSensor();
+        uint8_t u8GetBrightness();
         class Eep *pEep;
         class WebServer *pWebServer;
         class LedStripe *pLedStripe;
+        class NtpTime *pNtpTime;
         uint8_t u8DebugLevel         = 0;
         tButtonStatus enButtonStatus = nNone;
         uint16_t u16IrDistance       = 0;     // adc value from GP2Y0A21YK0F IR distance sensor

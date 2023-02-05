@@ -20,9 +20,10 @@ Buttons::Buttons(uint8_t u8NewDebugLevel) {
 }
 
 //=============================================================================
-void Buttons::vInit(class LedStripe *pNewLedStripe, class Eep *pNewEep) {
+void Buttons::vInit(class LedStripe *pNewLedStripe, class Eep *pNewEep, class NtpTime *pNewNtpTime) {
     pLedStripe = pNewLedStripe; // store LedStripe class
     pEep       = pNewEep;       // store eep class
+    pNtpTime   = pNewNtpTime;   // store ntp class
 }
 
 //=============================================================================
@@ -121,7 +122,7 @@ void Buttons::vLoop() {
     static bool boButtonStatusShowed = false;
     static bool boTmpStripeOn        = false;
     static bool boStripeOn           = false;
-    static bool boDarken             = true; // true:u8Brightness-- / false: u8Brightness++
+    static bool boDarken             = true; // true:u8BrightnessDay/Night-- / false: u8BrightnessDay/Night++
     static PT1 *cDimDamp             = new PT1(10, 300);
 
     if (pEep->u8MotionSensorEnabled) {
@@ -190,18 +191,28 @@ void Buttons::vLoop() {
                 // tripe is off, turn it now on
                 boStripeOn = true;
                 pLedStripe->vTurn(boStripeOn, true);   // turn fast on
-                cDimDamp->vInitDampVal(pEep->u8Brightness); // init dim damper
+                cDimDamp->vInitDampVal(u8GetBrightness()); // init dim damper
             }
             switch ((tDimMode)pEep->u8DimMode) {
                 case nByDistance:
                     // change brightness via distance
-                    pEep->u8Brightness = (uint8_t)cDimDamp->fGetDampedVal(
-                        map(
-                            u16IrDistance,
-                            pEep->u16CalibrationValue,
-                            1024,
-                            pEep->u8BrightnessMin,
-                            pEep->u8BrightnessMax));
+                    if (pNtpTime->stLocal.boSunHasRisen) {
+                        pEep->u8BrightnessDay = (uint8_t)cDimDamp->fGetDampedVal(
+                            map(
+                                u16IrDistance,
+                                pEep->u16CalibrationValue,
+                                1024,
+                                pEep->u8BrightnessMin,
+                                pEep->u8BrightnessMax));
+                    } else {
+                        pEep->u8BrightnessNight = (uint8_t)cDimDamp->fGetDampedVal(
+                            map(
+                                u16IrDistance,
+                                pEep->u16CalibrationValue,
+                                1024,
+                                pEep->u8BrightnessMin,
+                                pEep->u8BrightnessMax));
+                    }
                     pLedStripe->vSetColor(-1);
                     break;
                 case nIncremental:
@@ -209,14 +220,22 @@ void Buttons::vLoop() {
                     // change brightness via ++/--
                     if (boDarken) {
                         // reduce the brightness
-                        if (pEep->u8Brightness >= pEep->u8BrightnessMin)
-                            pEep->u8Brightness--;
+                        if (u8GetBrightness() >= pEep->u8BrightnessMin)
+                            if (pNtpTime->stLocal.boSunHasRisen) {
+                                pEep->u8BrightnessDay--;
+                            } else {
+                                pEep->u8BrightnessNight--;
+                            }
                         else
                             boDarken = false; // change mode
                     } else {
                         // increase the brightness
-                        if (pEep->u8Brightness < pEep->u8BrightnessMax)
-                            pEep->u8Brightness++;
+                        if (u8GetBrightness() < pEep->u8BrightnessMax)
+                            if (pNtpTime->stLocal.boSunHasRisen) {
+                                pEep->u8BrightnessDay++;
+                            } else {
+                                pEep->u8BrightnessNight--;
+                            }
                         else
                             boDarken = true; // change mode
                     }
@@ -259,4 +278,9 @@ void Buttons::vLoop() {
             boButtonStatusShowed = false;
             break;
     }
+}
+
+//=============================================================================
+uint8_t Buttons::u8GetBrightness() {
+    return pNtpTime->stLocal.boSunHasRisen ? pEep->u8BrightnessDay : pEep->u8BrightnessNight;
 }
