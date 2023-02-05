@@ -178,8 +178,7 @@ void Buttons::vLoop() {
             enButtonStatus = nNone; // consume the status
             boStripeOn     = !pLedStripe->boGetSwitchStatus(); // toggle turn mode
             pLedStripe->vTurn(boStripeOn, false); // turn smooth on/off
-            if (pWebServer)
-                pWebServer->vSendStripeStatus(-1, true); // update values for every web client
+            if (pWebServer) pWebServer->vSendStripeStatus(-1, true); // update values for every web client
             break;
         //..............................
         case nIrButton_LongPress:
@@ -254,8 +253,7 @@ void Buttons::vLoop() {
                 }
                 boStripeOn = true;
                 pLedStripe->vTurn(boStripeOn, false);    // turn smooth on
-                if (pWebServer)
-                    pWebServer->vSendStripeStatus(-1, true); // update values for every web client
+                if (pWebServer) pWebServer->vSendStripeStatus(-1, true); // update values for every web client
             }
             break;
         //..............................
@@ -269,8 +267,7 @@ void Buttons::vLoop() {
                 }
                 boStripeOn = false;
                 pLedStripe->vTurn(boStripeOn, false); // turn smooth off
-                if (pWebServer)
-                    pWebServer->vSendStripeStatus(-1, true); // update values for every web client
+                if (pWebServer) pWebServer->vSendStripeStatus(-1, true); // update values for every web client
             }
             break;
         //..............................
