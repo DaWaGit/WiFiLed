@@ -130,6 +130,7 @@
       function selectElement(element) {
         document.getElementById('color').style.display = element === 'color' ? 'block' : 'none';
         document.getElementById('wifi').style.display  = element === 'wifi'  ? 'block' : 'none';
+        document.getElementById('time').style.display  = element === 'time'  ? 'block' : 'none';
         document.getElementById('led').style.display   = element === 'led'   ? 'block' : 'none';
         document.getElementById('setup').style.display = element === 'setup' ? 'block' : 'none';
       }
@@ -348,9 +349,10 @@
             <tbody>
               <tr>
                 <td class="custom-select">
-                  <select name="select" id="select">
+                  <select name="select" id="select" autocomplete="off">
                     <option value="color" selected="selected">Color mode</option>
                     <option value="wifi">WiFi setup</option>
+                    <option value="time">Time setup</option>
                     <option value="led">LED setup</option>
                     <option value="setup">Global Setup</option>
                   </select>
@@ -415,6 +417,97 @@
               <tr>
                 <td class="value-name">&nbsp;</td><td class="value"><button class="btn"onclick='doSend("Ssid:"+document.getElementById("ssidValue").value+"Pwd:"+document.getElementById("pwdValue").value); alert("WiFiLed-`id` will now restart to connect to the configured SSID!");'>Success</button></td>
               </tr>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="time" class="config1 config2" style="display: inline-block;"">
+          <table style=" width:100%; height:30px; border-collapse: collapse;">
+            <tbody>
+              <tr>
+                <td class="value-name" width="135px">Time Zone</td>
+                <td class="custom-select">
+                  <select name="timeZone" id="timeZone" autocomplete="off">
+                    <option value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Amsterdam</option>
+                    <option value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Andorra</option>
+                    <option value="<+04>-4">Europe/Astrakhan</option>
+                    <option value="EET-2EEST,M3.5.0/3,M10.5.0/4">Europe/Athens</option>
+                    <option value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Belgrade</option>
+                    <option value="CET-1CEST,M3.5.0,M10.5.0/3" selected="selected">Europe/Berlin</option>
+                    <option value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Bratislava</option>
+                    <option value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Brussels</option>
+                    <option value="EET-2EEST,M3.5.0/3,M10.5.0/4">Europe/Bucharest</option>
+                    <option value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Budapest</option>
+                    <option value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Busingen</option>
+                    <option value="EET-2EEST,M3.5.0,M10.5.0/3">Europe/Chisinau</option>
+                    <option value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Copenhagen</option>
+                    <option value="IST-1GMT0,M10.5.0,M3.5.0/1">Europe/Dublin</option>
+                    <option value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Gibraltar</option>
+                    <option value="GMT0BST,M3.5.0/1,M10.5.0">Europe/Guernsey</option>
+                    <option value="EET-2EEST,M3.5.0/3,M10.5.0/4">Europe/Helsinki</option>
+                    <option value="GMT0BST,M3.5.0/1,M10.5.0">Europe/Isle_of_Man</option>
+                    <option value="<+03>-3">Europe/Istanbul</option>
+                    <option value="GMT0BST,M3.5.0/1,M10.5.0">Europe/Jersey</option>
+                    <option value="EET-2">Europe/Kaliningrad</option>
+                    <option value="EET-2EEST,M3.5.0/3,M10.5.0/4">Europe/Kiev</option>
+                    <option value="<+03>-3">Europe/Kirov</option>
+                    <option value="WET0WEST,M3.5.0/1,M10.5.0">Europe/Lisbon</option>
+                    <option value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Ljubljana</option>
+                    <option value="GMT0BST,M3.5.0/1,M10.5.0">Europe/London</option>
+                    <option value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Luxembourg</option>
+                    <option value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Madrid</option>
+                    <option value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Malta</option>
+                    <option value="EET-2EEST,M3.5.0/3,M10.5.0/4">Europe/Mariehamn</option>
+                    <option value="<+03>-3">Europe/Minsk</option>
+                    <option value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Monaco</option>
+                    <option value="MSK-3">Europe/Moscow</option>
+                    <option value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Oslo</option>
+                    <option value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Paris</option>
+                    <option value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Podgorica</option>
+                    <option value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Prague</option>
+                    <option value="EET-2EEST,M3.5.0/3,M10.5.0/4">Europe/Riga</option>
+                    <option value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Rome</option>
+                    <option value="<+04>-4">Europe/Samara</option>
+                    <option value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/San_Marino</option>
+                    <option value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Sarajevo</option>
+                    <option value="<+04>-4">Europe/Saratov</option>
+                    <option value="MSK-3">Europe/Simferopol</option>
+                    <option value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Skopje</option>
+                    <option value="EET-2EEST,M3.5.0/3,M10.5.0/4">Europe/Sofia</option>
+                    <option value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Stockholm</option>
+                    <option value="EET-2EEST,M3.5.0/3,M10.5.0/4">Europe/Tallinn</option>
+                    <option value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Tirane</option>
+                    <option value="<+04>-4">Europe/Ulyanovsk</option>
+                    <option value="EET-2EEST,M3.5.0/3,M10.5.0/4">Europe/Uzhgorod</option>
+                    <option value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Vaduz</option>
+                    <option value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Vatican</option>
+                    <option value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Vienna</option>
+                    <option value="EET-2EEST,M3.5.0/3,M10.5.0/4">Europe/Vilnius</option>
+                    <option value="<+03>-3">Europe/Volgograd</option>
+                    <option value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Warsaw</option>
+                    <option value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Zagreb</option>
+                    <option value="EET-2EEST,M3.5.0/3,M10.5.0/4">Europe/Zaporozhye</option>
+                    <option value="CET-1CEST,M3.5.0,M10.5.0/3">Europe/Zurich</option>
+                  </select>
+                </td>
+              </tr>
+              <tr>
+                <td class="value-name">Server1</td>
+                <td class="value"><input type="text" placeholder="e.g. ptbtime1.ptb.de" id="ntpServer1" name="ntpServer1" value=""></td>
+              <tr>
+                <td class="value-name">Server2</td>
+                <td class="value"><input type="text" placeholder="e.g. ptbtime2.ptb.de" id="ntpServer2" name="ntpServer2" value=""></td>
+              </tr>
+              <tr>
+                <td class="value-name">Latitude</td>
+                <td class="value"><input type="number" placeholder="12.345" id="latitude" name="latitude" value=""></td>
+              </tr>
+              <tr>
+                <td class="value-name">Longitude</td>
+                <td class="value"><input type="number" placeholder="67.89" id="longitude" name="longitude" value=""></td>
+              </tr>
+              <tr>
+                <td class="value-name">&nbsp;</td><td class="value"><button class="btn" onclick=''>Success</button></td>
               </tr>
             </tbody>
           </table>
