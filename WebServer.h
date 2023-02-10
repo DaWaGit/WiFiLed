@@ -36,8 +36,10 @@ class WebServer {
 //        void vSendBrightness(int, bool);
         void vSendDistanceSensorEnabled(int, bool);
         void vSendMotionSensorEnabled(int, bool);
+        void vSendTimeSetup(int, bool);
         void vSendBufferToAllClients(char *, int);
         void vSendBufferToOneClient(char *, int);
+        void vSendInitValues(int , bool);
         class Eep *pEep;
         class LedStripe *pLedStripe;
         class Buttons *pButtons;

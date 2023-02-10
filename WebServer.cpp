@@ -75,10 +75,7 @@ void WebServer::vInit(class Buttons *pNewButtons, class LedStripe *pNewLedStripe
     pWebSocket->begin();
     pWebSocket->onEvent(std::bind(&WebServer::vWebSocketEvent, this, _1, _2, _3, _4));
 
-    vSendStripeStatus(-1, true);          // update values for every client
-    vSendColorMode(-1, true);             // update colorMode for every client
-    vSendDistanceSensorEnabled(-1, true); // update sensor usage for every client
-    vSendMotionSensorEnabled(-1, true);   // update sensor usage for every client
+    //vSendInitValues(-1, true);            // update values for every client
 }
 
 //=======================================================================
@@ -169,25 +166,6 @@ void WebServer::vWebSocketEvent(uint8_t clientNumber,
                 // turn stripe off via web page
                 pLedStripe->vTurn(false, false);
                 vSendStripeStatus(clientNumber, true); // update values for every client expect himself
-            } else if (strcmp((char *)payload, "get") == 0) {
-                // get the current color configuration via web page
-                vSendStripeStatus(clientNumber, false);
-                vSendColorMode(clientNumber, false);
-                vSendDistanceSensorEnabled(clientNumber, false);
-                vSendMotionSensorEnabled(clientNumber, false);
-/*
-            } else if (strstr((char *)payload, "setB")) {
-                // change hue, saturation, brightness via web page
-                String sPayload    = String((char *)payload);
-                int start          = sPayload.indexOf("setB:") + 5;
-                int end            = sPayload.length();
-                if (pNtpTime->stLocal.boSunHasRisen) {
-                    pEep->u8BrightnessDay = (uint8_t) sPayload.substring(start, end).toInt();
-                } else {
-                    pEep->u8BrightnessNight = (uint8_t) sPayload.substring(start, end).toInt();
-                }
-                vSendBrightness(clientNumber, true);
-*/
             } else if (strstr((char *)payload, "set=")) {
                 // change hue, saturation, brightness via web page
                 String sPayload = String((char *)payload);
@@ -243,19 +221,19 @@ void WebServer::vWebSocketEvent(uint8_t clientNumber,
                 // WiFi config changed via web page
                 String sPayload = String((char *)payload);
 
-                char acWifiSsid[EepSizeWifiSsid];
-                char acWifiPwd[EepSizeWifiPwd];
+                char acWifiSsid[EepStringSize];
+                char acWifiPwd[EepStringSize];
 
                 int start = sPayload.indexOf("Ssid:") + 5;
                 int end   = sPayload.indexOf("Pwd:");
-                for (int i = 0; (i < EepSizeWifiSsid-1) && (i < (end-start)); i++) {
+                for (int i = 0; (i < EepStringSize-1) && (i < (end-start)); i++) {
                     acWifiSsid[i]   = sPayload[start+i];
                     acWifiSsid[i+1] = 0;
                 }
 
                 start = sPayload.indexOf("Pwd:") + 4;
                 end   = sPayload.length();
-                for (int i = 0; (i < EepSizeWifiPwd-1) && (i < (end-start)); i++) {
+                for (int i = 0; (i < EepStringSize-1) && (i < (end-start)); i++) {
                     acWifiPwd[i]   = sPayload[start+i];
                     acWifiPwd[i+1] = 0;
                 }
@@ -346,6 +324,7 @@ void WebServer::vWebSocketEvent(uint8_t clientNumber,
             if (u8DebugLevel & DEBUG_WEBSERVER_EVENTS) {
                 Serial.println(" PONG");
             }
+            vSendInitValues(clientNumber, false);
             break;
         default:
             if (u8DebugLevel & DEBUG_WEBSERVER_EVENTS) {
@@ -398,6 +377,24 @@ void WebServer::vSendColorMode(int clientNumber, bool boToAllClients) {
     sprintf(msg_buf, "colorMode:%dspeed:%d",
             pEep->u8ColorMode,
             pEep->u8Speed);
+    if (boToAllClients) {
+        // send to all clients expect the selected one
+        vSendBufferToAllClients(msg_buf, clientNumber);
+    } else {
+        // send only to the selected client
+        vSendBufferToOneClient(msg_buf, clientNumber);
+    }
+}
+
+//=======================================================================
+// send the current color mode to all active clients
+void WebServer::vSendTimeSetup(int clientNumber, bool boToAllClients) {
+    char msg_buf[100];
+
+    // get the current stripe status
+    sprintf(msg_buf, "Longitude:%fLatitude:%f",
+            pEep->dLongitude,
+            pEep->dLatitude);
     if (boToAllClients) {
         // send to all clients expect the selected one
         vSendBufferToAllClients(msg_buf, clientNumber);
@@ -470,4 +467,14 @@ void WebServer::vSendBufferToOneClient(char *msg_buf,int clientNumber) {
         }
         pWebSocket->sendTXT(clientNumber, msg_buf);
     }
+}
+
+//=======================================================================
+// send init values to the selected clients
+void WebServer::vSendInitValues(int clientNumber, bool boToAllClients) {
+    vSendStripeStatus(clientNumber, boToAllClients);          // update values for every client
+    vSendColorMode(clientNumber, boToAllClients);             // update colorMode for every client
+    vSendDistanceSensorEnabled(clientNumber, boToAllClients); // update sensor usage for every client
+    vSendMotionSensorEnabled(clientNumber, boToAllClients);   // update sensor usage for every client
+    vSendTimeSetup(clientNumber, boToAllClients);             // update time setup for every client
 }

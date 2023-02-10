@@ -14,8 +14,8 @@
 #define EepAdr_u8BrightnessDay       (EepAdr_u8Saturation + sizeof(uint8_t))
 #define EepAdr_u8DimMode             (EepAdr_u8BrightnessDay + sizeof(uint8_t))
 #define EepAdr_acWifiSsid            (EepAdr_u8DimMode + sizeof(uint8_t))
-#define EepAdr_acWifiPwd             (EepAdr_acWifiSsid + EepSizeWifiSsid)
-#define EepAdr_u8WiFiMode            (EepAdr_acWifiPwd + EepSizeWifiPwd)
+#define EepAdr_acWifiPwd             (EepAdr_acWifiSsid + EepStringSize)
+#define EepAdr_u8WiFiMode            (EepAdr_acWifiPwd + EepStringSize)
 #define EepAdr_u8BrightnessMin       (EepAdr_u8WiFiMode + sizeof(uint8_t))
 #define EepAdr_u8BrightnessMax       (EepAdr_u8BrightnessMin + sizeof(uint8_t))
 #define EepAdr_u8ColorMode           (EepAdr_u8BrightnessMax + sizeof(uint8_t))
@@ -24,7 +24,14 @@
 #define EepAdr_u8DistanceSensorEnabled (EepAdr_u8MotionOffDelay + sizeof(uint8_t))
 #define EepAdr_u8MotionSensorEnabled   (EepAdr_u8DistanceSensorEnabled + sizeof(uint8_t))
 #define EepAdr_u8BrightnessNight     (EepAdr_u8MotionSensorEnabled + sizeof(uint8_t))
-#define EepAdr_Last                  (EepAdr_u8BrightnessNight + sizeof(uint8_t))
+
+#define EepAdr_dLongitude             (EepAdr_u8BrightnessNight + sizeof(uint8_t))
+#define EepAdr_dLatitude              (EepAdr_dLongitude + sizeof(double))
+#define EepAdr_acTimeZone             (EepAdr_dLatitude + EepStringSize)
+#define EepAdr_acNtpServer1           (EepAdr_acTimeZone + EepStringSize)
+#define EepAdr_acNtpServer2           (EepAdr_acNtpServer1 + EepStringSize)
+
+#define EepAdr_Last                   (EepAdr_acNtpServer2 + EepStringSize)
 
 //=======================================================================
 Eep::Eep(uint8_t u8NewDebugLevel) {
@@ -44,47 +51,53 @@ void Eep::vInit() {
     }
 
     // get all values
-    EEPROM.get(EepAdr_ChipId,                u32ChipId);
-    EEPROM.get(EepAdr_u16CalibrationValue,   u16CalibrationValue);
-    EEPROM.get(EepAdr_u16LedCount,           u16LedCount);
-    EEPROM.get(EepAdr_u16Hue,                u16Hue);
-    EEPROM.get(EepAdr_u8Saturation,          u8Saturation);
-    EEPROM.get(EepAdr_u8BrightnessDay,       u8BrightnessDay);
-    EEPROM.get(EepAdr_u8BrightnessNight,     u8BrightnessNight);
-    EEPROM.get(EepAdr_u8BrightnessMin,       u8BrightnessMin);
-    EEPROM.get(EepAdr_u8BrightnessMax,       u8BrightnessMax);
-    EEPROM.get(EepAdr_u8DimMode,             u8DimMode);
-    EEPROM.get(EepAdr_u8WiFiMode,            u8WiFiMode);
-    EEPROM.get(EepAdr_u8ColorMode,           u8ColorMode); u8ColorMode = (u8ColorMode >= nNoMode) ? nNoMode-1 : u8ColorMode;
-    EEPROM.get(EepAdr_u8Speed,               u8Speed);
-    EEPROM.get(EepAdr_u8MotionOffDelay,      u8MotionOffDelay);
+    EEPROM.get(EepAdr_ChipId,                  u32ChipId);
+    EEPROM.get(EepAdr_u16CalibrationValue,     u16CalibrationValue);
+    EEPROM.get(EepAdr_u16LedCount,             u16LedCount);
+    EEPROM.get(EepAdr_u16Hue,                  u16Hue);
+    EEPROM.get(EepAdr_u8Saturation,            u8Saturation);
+    EEPROM.get(EepAdr_u8BrightnessDay,         u8BrightnessDay);
+    EEPROM.get(EepAdr_u8BrightnessNight,       u8BrightnessNight);
+    EEPROM.get(EepAdr_u8BrightnessMin,         u8BrightnessMin);
+    EEPROM.get(EepAdr_u8BrightnessMax,         u8BrightnessMax);
+    EEPROM.get(EepAdr_u8DimMode,               u8DimMode);
+    EEPROM.get(EepAdr_u8WiFiMode,              u8WiFiMode);
+    EEPROM.get(EepAdr_u8ColorMode,             u8ColorMode); u8ColorMode = (u8ColorMode >= nNoMode) ? nNoMode-1 : u8ColorMode;
+    EEPROM.get(EepAdr_u8Speed,                 u8Speed);
+    EEPROM.get(EepAdr_u8MotionOffDelay,        u8MotionOffDelay);
     EEPROM.get(EepAdr_u8DistanceSensorEnabled, u8DistanceSensorEnabled);
     EEPROM.get(EepAdr_u8MotionSensorEnabled,   u8MotionSensorEnabled);
 
+    EEPROM.get(EepAdr_dLongitude,              dLongitude);
+    EEPROM.get(EepAdr_dLatitude,               dLatitude);
+
     if (u8DebugLevel & DEBUG_EEP_EVENTS) {
         char buffer[100];
-        sprintf(buffer, "Eep.Read Adr:0x%04X u32ChipId             = 0x%08X ",EepAdr_ChipId, u32ChipId); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X u16CalibrationValue   = %d ", EepAdr_u16CalibrationValue, u16CalibrationValue); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X u16LedCount           = %d ", EepAdr_u16LedCount, u16LedCount); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X u16Hue                = 0x%04X ", EepAdr_u16Hue, u16Hue); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X u8Saturation          = 0x%02X ", EepAdr_u8Saturation, u8Saturation); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X u8BrightnessDay       = 0x%02X ", EepAdr_u8BrightnessDay, u8BrightnessDay); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X u8BrightnessNight     = 0x%02X ", EepAdr_u8BrightnessNight, u8BrightnessNight); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X u8BrightnessMin       = %d ", EepAdr_u8BrightnessMin, u8BrightnessMin); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X u8BrightnessMax       = %d ", EepAdr_u8BrightnessMax, u8BrightnessMax); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X u8DimMode             = 0x%02X ", EepAdr_u8DimMode, u8DimMode); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X u8WiFiMode            = 0x%02X ", EepAdr_u8WiFiMode, u8WiFiMode); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X u8ColorMode           = %d ", EepAdr_u8ColorMode, u8ColorMode); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X u8Speed               = %d ", EepAdr_u8Speed, u8Speed); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X u8MotionOffDelay      = %d [s]", EepAdr_u8MotionOffDelay, u8MotionOffDelay); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u32ChipId               = 0x%08X ",EepAdr_ChipId, u32ChipId); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u16CalibrationValue     = %d ", EepAdr_u16CalibrationValue, u16CalibrationValue); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u16LedCount             = %d ", EepAdr_u16LedCount, u16LedCount); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u16Hue                  = 0x%04X ", EepAdr_u16Hue, u16Hue); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u8Saturation            = 0x%02X ", EepAdr_u8Saturation, u8Saturation); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u8BrightnessDay         = 0x%02X ", EepAdr_u8BrightnessDay, u8BrightnessDay); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u8BrightnessNight       = 0x%02X ", EepAdr_u8BrightnessNight, u8BrightnessNight); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u8BrightnessMin         = %d ", EepAdr_u8BrightnessMin, u8BrightnessMin); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u8BrightnessMax         = %d ", EepAdr_u8BrightnessMax, u8BrightnessMax); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u8DimMode               = 0x%02X ", EepAdr_u8DimMode, u8DimMode); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u8WiFiMode              = 0x%02X ", EepAdr_u8WiFiMode, u8WiFiMode); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u8ColorMode             = %d ", EepAdr_u8ColorMode, u8ColorMode); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u8Speed                 = %d ", EepAdr_u8Speed, u8Speed); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u8MotionOffDelay        = %d [s]", EepAdr_u8MotionOffDelay, u8MotionOffDelay); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
         sprintf(buffer, "Eep.Read Adr:0x%04X u8DistanceSensorEnabled = %d", EepAdr_u8DistanceSensorEnabled, u8DistanceSensorEnabled); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
         sprintf(buffer, "Eep.Read Adr:0x%04X u8MotionSensorEnabled   = %d", EepAdr_u8MotionSensorEnabled, u8MotionSensorEnabled); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+
+        sprintf(buffer, "Eep.Read Adr:0x%04X dLongitude              = %f", EepAdr_dLongitude, dLongitude); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X dLatitude               = %f", EepAdr_dLatitude, dLatitude); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
     }
 }
 //=======================================================================
 void Eep::vFactoryReset() {
-    char acWifiSsid[EepSizeWifiSsid];
-    char acWifiPwd[EepSizeWifiPwd];
+    char acWifiSsid[EepStringSize];
+    char acWifiPwd[EepStringSize];
 
     EEPROM.put(EepAdr_ChipId, ESP.getChipId()); // ChipId
     vSetCalibrationValue(200, false);           // distance sensor calibration value (0..65535 default:200)
@@ -103,8 +116,11 @@ void Eep::vFactoryReset() {
     vSetDistanceSensorEnabled(0, false);          // enable/disable distance sensor (0..255 default:0)
     vSetMotionSensorEnabled(1, false);            // enable/disable motion sensor (0..255 default:1)
 
-    for (int i = 0; i < EepSizeWifiSsid-1; i++) { acWifiSsid[i] = 0; }
-    for (int i = 0; i < EepSizeWifiPwd-1; i++)  { acWifiPwd[i]  = 0; }
+    vSetLongitude(0, false);                    // store longitude
+    vSetLatitude(0, false);                     // store latitude
+
+    for (int i = 0; i < EepStringSize-1; i++) { acWifiSsid[i] = 0; }
+    for (int i = 0; i < EepStringSize-1; i++)  { acWifiPwd[i]  = 0; }
     vSetWifiSsidPwd(acWifiSsid, acWifiPwd, false);// set wifi SSID und Pwd
 
     if (u8DebugLevel & DEBUG_EEP_EVENTS) {
@@ -240,7 +256,7 @@ void Eep::vSetCalibrationValue(volatile uint16_t u16NewCalibrationValue, bool bo
 //=======================================================================
 void Eep::vGetWifiSsid(char *pWifiSsid) {
     // reat SSID byte-by-byte to EEPROM
-    for (int i = 0; i < EepSizeWifiSsid; i++) {
+    for (int i = 0; i < EepStringSize; i++) {
         pWifiSsid[i] = EEPROM.read(EepAdr_acWifiSsid + i);
     }
     if (u8DebugLevel & DEBUG_EEP_EVENTS) {
@@ -250,7 +266,7 @@ void Eep::vGetWifiSsid(char *pWifiSsid) {
 }
 void Eep::vGetWifiPwd(char *pWifiPwd) {
     // read PWD byte-by-byte to EEPROM
-    for (int i = 0; i < EepSizeWifiPwd; i++) {
+    for (int i = 0; i < EepStringSize; i++) {
         pWifiPwd[i] = EEPROM.read(EepAdr_acWifiPwd + i);
     }
     if (u8DebugLevel & DEBUG_EEP_EVENTS) {
@@ -260,11 +276,11 @@ void Eep::vGetWifiPwd(char *pWifiPwd) {
 }
 void Eep::vSetWifiSsidPwd(char *pNewWifiSsid, char *pNewWifiPwd, bool boPrintConsole) {
     // writing SSID byte-by-byte to EEPROM
-    for (int i = 0; i < EepSizeWifiSsid; i++) {
+    for (int i = 0; i < EepStringSize; i++) {
         EEPROM.write(EepAdr_acWifiSsid + i, pNewWifiSsid[i]);
     }
     // writing PWD byte-by-byte to EEPROM
-    for (int i = 0; i < EepSizeWifiPwd; i++) {
+    for (int i = 0; i < EepStringSize; i++) {
         EEPROM.write(EepAdr_acWifiPwd + i, pNewWifiPwd[i]);
     }
     EEPROM.commit();
@@ -435,6 +451,41 @@ void Eep::vSetBrightnessMax( uint8_t u8NewBrightnessMax, bool boPrintConsole) {
     if (u8DebugLevel & DEBUG_EEP_EVENTS && boPrintConsole) {
         char buffer[100];
         sprintf(buffer, "Eep.Write Adr:0x%04X %s u8BrightnessMax = %d ", EepAdr_u8BrightnessMax, boUpdated ? "updated" : "unchanged", u8BrightnessMax);
+        vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+    }
+}
+//#############################################################################
+void Eep::vSetLongitude(double dNewLongitude, bool boPrintConsole) {
+    uint16_t dLongitude_Tmp = 0;
+    bool boUpdated               = false;
+    dLongitude = dNewLongitude;                    // store new vale in RAM
+    EEPROM.get(EepAdr_dLongitude, dLongitude_Tmp); // read the current value from EEP
+    if (dLongitude_Tmp != dLongitude) {
+        // at least one value changed
+        EEPROM.put(EepAdr_dLongitude, dLongitude); // store new value in EEP
+        EEPROM.commit();
+        boUpdated = true;
+    }
+    if (u8DebugLevel & DEBUG_EEP_EVENTS && boPrintConsole) {
+        char buffer[100];
+        sprintf(buffer, "Eep.Write Adr:0x%04X %s dLongitude = %f ", EepAdr_dLongitude, boUpdated ? "updated" : "unchanged", dLongitude);
+        vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+    }
+}
+void Eep::vSetLatitude(double dNewLatitude, bool boPrintConsole) {
+    uint16_t dLatitude_Tmp = 0;
+    bool boUpdated               = false;
+    dLatitude = dNewLatitude;                    // store new vale in RAM
+    EEPROM.get(EepAdr_dLatitude, dLatitude_Tmp); // read the current value from EEP
+    if (dLatitude_Tmp != dLatitude) {
+        // at least one value changed
+        EEPROM.put(EepAdr_dLatitude, dLatitude); // store new value in EEP
+        EEPROM.commit();
+        boUpdated = true;
+    }
+    if (u8DebugLevel & DEBUG_EEP_EVENTS && boPrintConsole) {
+        char buffer[100];
+        sprintf(buffer, "Eep.Write Adr:0x%04X %s dLatitude = %f ", EepAdr_dLatitude, boUpdated ? "updated" : "unchanged", dLatitude);
         vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
     }
 }

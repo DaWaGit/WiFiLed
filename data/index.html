@@ -153,8 +153,6 @@
         console.log("[WebSocket] Connected");
         // clear timeout timer
         clearInterval(reconnectTimer);
-        // Get the current state of the LED
-        doSend("get");
       }
       //#########################################
       // Called when the WebSocket connection is closed

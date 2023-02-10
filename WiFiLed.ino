@@ -52,7 +52,7 @@ void setup() {
         "ptbtime1.ptb.de",            // NTP server 1..3 e.g. "at.pool.ntp.org "
         "ptbtime2.ptb.de",
         "ptbtime3.ptb.de",
-        8.959015, 50.041904 // LATITUDE=50.041904; LONGITUDE=8.959015; position Fußwasser 14, 63500 Seligenstadt
+        oEep.dLongitude, oEep.dLatitude
     );
 }
 //=======================================================================

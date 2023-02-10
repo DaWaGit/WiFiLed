@@ -14,8 +14,8 @@
 #define CONNECTION_TIMEOUT_SSID 60000*3 // timeout for initially SSID connection [ms]
 
 class Eep *pEep;
-char acWifiSsid[EepSizeWifiSsid];
-char acWifiPwd[EepSizeWifiPwd];
+char acWifiSsid[EepStringSize];
+char acWifiPwd[EepStringSize];
 
 volatile ulong ulWiFiLastBlinkInterval = 0;
 volatile ulong ulSSIDinitLinkTimeout   = 0;
@@ -62,10 +62,10 @@ void Wlan::vInit(class Buttons *pNewButtons, class LedStripe *pNewLedStripe, cla
 
     // get length of defined SSID in EEP
     int iSSIDlength = 0;
-    for (int i = 0; i < EepSizeWifiSsid-1; i++) {
+    for (int i = 0; i < EepStringSize-1; i++) {
         if (acWifiSsid[i] == 0) {
             iSSIDlength = i;
-            i = EepSizeWifiSsid;
+            i = EepStringSize;
         }
     }
 
