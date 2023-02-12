@@ -237,6 +237,20 @@
           }
           return;
         }
+        //-----------------------------
+        // enable/disable distance sensor
+        result = evt.data.match(/^Latitude:(([0-9]*[.])?[0-9]+)Longitude:(([0-9]*[.])?[0-9]+)$/i);
+        //console.log("result: " + result);
+        if (result) {
+          boSendToDevice = false;
+          if (result[1]) {
+            $("#latitude").prop('value', parseFloat(result[1]));
+          }
+          if (result[3]) {
+            $("#longitude").prop('value', parseFloat(result[3]));
+          }
+          return;
+        }
 /*
         //-----------------------------
         // new brightness
@@ -498,14 +512,16 @@
               </tr>
               <tr>
                 <td class="value-name">Latitude</td>
-                <td class="value"><input type="number" placeholder="12.345" id="latitude" name="latitude" value=""></td>
+                <td class="value"><input type="number" step="any" placeholder="12.345" id="latitude" name="latitude" value=""></td>
               </tr>
               <tr>
                 <td class="value-name">Longitude</td>
-                <td class="value"><input type="number" placeholder="67.89" id="longitude" name="longitude" value=""></td>
+                <td class="value"><input type="number" step="any" placeholder="67.89" id="longitude" name="longitude" value=""></td>
               </tr>
               <tr>
-                <td class="value-name">&nbsp;</td><td class="value"><button class="btn" onclick=''>Success</button></td>
+                <td class="value-name">&nbsp;</td><td class="value">
+                  <button class="btn" onclick='doSend("Latitude:"+document.getElementById("latitude").value+"Longitude:"+document.getElementById("longitude").value);'>Success
+                  </button></td>
               </tr>
             </tbody>
           </table>

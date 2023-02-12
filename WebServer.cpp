@@ -281,6 +281,21 @@ void WebServer::vWebSocketEvent(uint8_t clientNumber,
                 int end         = sPayload.length();
                 pEep->vSetMotionSensorEnabled((uint8_t)(sPayload.substring(start, end).toInt()), true);
                 vSendMotionSensorEnabled(clientNumber, true);
+            } else if (strstr((char *)payload, "Latitude:")) {
+                // change hue, saturation, brightness via web page
+                String sPayload = String((char *)payload);
+
+                int start = sPayload.indexOf("Latitude:") + 9;
+                int end = sPayload.indexOf("Longitude:");
+                double dLatitude = (double)sPayload.substring(start, end).toDouble();
+
+                start = sPayload.indexOf("Longitude:") + 10;
+                end = sPayload.length();
+                double dLongitude = (double)sPayload.substring(start, end).toDouble();
+
+                pEep->vSetLatitude(dLatitude, true);    // store latitude
+                pEep->vSetLongitude(dLongitude, true);  // store longitude
+                vSendTimeSetup(clientNumber, true);     // update time setup for every client
             } else {
                 // Message not recognized
             }
@@ -392,9 +407,9 @@ void WebServer::vSendTimeSetup(int clientNumber, bool boToAllClients) {
     char msg_buf[100];
 
     // get the current stripe status
-    sprintf(msg_buf, "Longitude:%fLatitude:%f",
-            pEep->dLongitude,
-            pEep->dLatitude);
+    sprintf(msg_buf, "Latitude:%fLongitude:%f",
+            pEep->dLatitude,
+            pEep->dLongitude);
     if (boToAllClients) {
         // send to all clients expect the selected one
         vSendBufferToAllClients(msg_buf, clientNumber);

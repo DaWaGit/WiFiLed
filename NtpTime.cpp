@@ -22,13 +22,13 @@ void NtpTime::vSetLedStripe(class LedStripe *pNewLedStripe) {
 }
 
 //=============================================================================
-void NtpTime::vInit(char *timeZone, char *ntpServer1, char *ntpServer2, char *ntpServer3, double newLongitude, double newLatitude) {
-    longitude = newLongitude;
+void NtpTime::vInit(char *timeZone, char *ntpServer1, char *ntpServer2, char *ntpServer3, double newLatitude, double newLongitude) {
     latitude  = newLatitude;
+    longitude = newLongitude;
     configTime(timeZone, ntpServer1, ntpServer2, ntpServer3); // by default, the NTP will be started after 60 secs
 
     if (u8DebugLevel & DEBUG_TIME_EVENTS) {
-        char buffer[200];
+        char buffer[300];
         sprintf(
             buffer,
             "TimeZone:'%s' NtpServer1:'%s' NtpServer2:'%s' NtpServer3:'%s'",

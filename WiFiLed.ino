@@ -47,12 +47,14 @@ void setup() {
     oWlan.vInit(&oButtons, &oLedStripe, &oEep, &oNtpTime); // init Wlan+Webserver
 #endif
     oNtpTime.vSetLedStripe(&oLedStripe);
+
     oNtpTime.vInit(
-        "CET-1CEST,M3.5.0,M10.5.0/3", // Berlin TimeZone see: https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
-        "ptbtime1.ptb.de",            // NTP server 1..3 e.g. "at.pool.ntp.org "
-        "ptbtime2.ptb.de",
-        "ptbtime3.ptb.de",
-        oEep.dLongitude, oEep.dLatitude
+        oEep.acTimZone,    // TimeZone see: https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
+        oEep.acNtpServer1, // NTP server 1 e.g. "ptbtime1.ptb.de"
+        oEep.acNtpServer2, // NTP server 2 e.g. "ptbtime2.ptb.de"
+        "ptbtime3.ptb.de", // NTP server 3 e.g. "ptbtime3.ptb.de"
+        oEep.dLatitude,    // latitude
+        oEep.dLongitude    // longitude
     );
 }
 //=======================================================================
