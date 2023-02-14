@@ -10,7 +10,7 @@
 //                              ||||||+-- LED events
 //                              |||||||+- Button events
 //                              ||||||||
-#define DEBUG_LEVEL            B01101001 // current enabled debug level
+#define DEBUG_LEVEL            B00101001 // current enabled debug level
 #define DEBUG_GLOBAL_OUTPUT    B10000000 // enable serial debug output
 #define DEBUG_TIME_EVENTS      B01000000 // enable NTP time events
 #define DEBUG_WEBSERVER_EVENTS B00100000 // show all web server events

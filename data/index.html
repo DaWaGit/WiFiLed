@@ -239,15 +239,26 @@
         }
         //-----------------------------
         // enable/disable distance sensor
-        result = evt.data.match(/^Latitude:(([0-9]*[.])?[0-9]+)Longitude:(([0-9]*[.])?[0-9]+)$/i);
-        //console.log("result: " + result);
+        result = evt.data.match(/^TimeZone:(.*)NTPserver1:(.*)NTPserver2:(.*)Latitude:(([0-9]*[.])?[0-9]+)Longitude:(([0-9]*[.])?[0-9]+)$/i);
         if (result) {
           boSendToDevice = false;
           if (result[1]) {
-            $("#latitude").prop('value', parseFloat(result[1]));
+            const $select = document.querySelector('#timeZone');
+            const $options = Array.from($select.options);
+            const optionToSelect = $options.find(item => item.value === result[1]);
+            optionToSelect.selected = true;
+          }
+          if (result[2]) {
+            $("#ntpServer1").prop('value', result[2]);
           }
           if (result[3]) {
-            $("#longitude").prop('value', parseFloat(result[3]));
+            $("#ntpServer2").prop('value', result[3]);
+          }
+          if (result[4]) {
+            $("#latitude").prop('value', parseFloat(result[4]));
+          }
+          if (result[6]) {
+            $("#longitude").prop('value', parseFloat(result[6]));
           }
           return;
         }
@@ -520,7 +531,7 @@
               </tr>
               <tr>
                 <td class="value-name">&nbsp;</td><td class="value">
-                  <button class="btn" onclick='doSend("Latitude:"+document.getElementById("latitude").value+"Longitude:"+document.getElementById("longitude").value);'>Success
+                  <button class="btn" onclick='doSend("TimeZone:"+document.getElementById("timeZone").value+"NTPserver1:"+document.getElementById("ntpServer1").value+"NTPserver2:"+document.getElementById("ntpServer2").value+"Latitude:"+document.getElementById("latitude").value+"Longitude:"+document.getElementById("longitude").value);'>Success
                   </button></td>
               </tr>
             </tbody>

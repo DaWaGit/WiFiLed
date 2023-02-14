@@ -281,18 +281,40 @@ void WebServer::vWebSocketEvent(uint8_t clientNumber,
                 int end         = sPayload.length();
                 pEep->vSetMotionSensorEnabled((uint8_t)(sPayload.substring(start, end).toInt()), true);
                 vSendMotionSensorEnabled(clientNumber, true);
-            } else if (strstr((char *)payload, "Latitude:")) {
+            } else if (strstr((char *)payload, "TimeZone:")) {
                 // change hue, saturation, brightness via web page
                 String sPayload = String((char *)payload);
 
-                int start = sPayload.indexOf("Latitude:") + 9;
-                int end = sPayload.indexOf("Longitude:");
+                int start = sPayload.indexOf("TimeZone:") + 9;
+                int end   = sPayload.indexOf("NTPserver1:");
+                for (int i = 0; (i < EepStringSize-1) && (i < (end-start)); i++) {
+                    pEep->acTimZone[i]   = sPayload[start+i];
+                    pEep->acTimZone[i+1] = 0;
+                }
+
+                start = sPayload.indexOf("NTPserver1:") + 11;
+                end   = sPayload.indexOf("NTPserver2:");
+                for (int i = 0; (i < EepStringSize-1) && (i < (end-start)); i++) {
+                    pEep->acNtpServer1[i]   = sPayload[start+i];
+                    pEep->acNtpServer1[i+1] = 0;
+                }
+
+                start = sPayload.indexOf("NTPserver2:") + 11;
+                end   = sPayload.indexOf("Latitude:");
+                for (int i = 0; (i < EepStringSize-1) && (i < (end-start)); i++) {
+                    pEep->acNtpServer2[i]   = sPayload[start+i];
+                    pEep->acNtpServer2[i+1] = 0;
+                }
+
+                start = sPayload.indexOf("Latitude:") + 9;
+                end   = sPayload.indexOf("Longitude:");
                 double dLatitude = (double)sPayload.substring(start, end).toDouble();
 
                 start = sPayload.indexOf("Longitude:") + 10;
-                end = sPayload.length();
+                end   = sPayload.length();
                 double dLongitude = (double)sPayload.substring(start, end).toDouble();
 
+                pEep->vSetNtp(pEep->acTimZone, pEep->acNtpServer1, pEep->acNtpServer2, true); // store time zone and NTM server
                 pEep->vSetLatitude(dLatitude, true);    // store latitude
                 pEep->vSetLongitude(dLongitude, true);  // store longitude
                 vSendTimeSetup(clientNumber, true);     // update time setup for every client
@@ -407,7 +429,10 @@ void WebServer::vSendTimeSetup(int clientNumber, bool boToAllClients) {
     char msg_buf[100];
 
     // get the current stripe status
-    sprintf(msg_buf, "Latitude:%fLongitude:%f",
+    sprintf(msg_buf, "TimeZone:%sNTPserver1:%sNTPserver2:%sLatitude:%fLongitude:%f",
+            pEep->acTimZone,
+            pEep->acNtpServer1,
+            pEep->acNtpServer2,
             pEep->dLatitude,
             pEep->dLongitude);
     if (boToAllClients) {
@@ -419,23 +444,6 @@ void WebServer::vSendTimeSetup(int clientNumber, bool boToAllClients) {
     }
 }
 
-/*
-//=======================================================================
-// send the current color mode to all active clients
-void WebServer::vSendBrightness(int clientNumber, bool boToAllClients) {
-    char msg_buf[100];
-
-    // get the current stripe status
-    sprintf(msg_buf, "setB:%dbDay:%dbNight:%d", pNtpTime->stLocal.boSunHasRisen ? pEep->u8BrightnessDay : pEep->u8BrightnessNight, pEep->u8BrightnessDay, pEep->u8BrightnessNight);
-    if (boToAllClients) {
-        // send to all clients expect the selected one
-        vSendBufferToAllClients(msg_buf, clientNumber);
-    } else {
-        // send only to the selected client
-        vSendBufferToOneClient(msg_buf, clientNumber);
-    }
-}
-*/
 //=======================================================================
 // send the current stripe status to all active clients
 void WebServer::vSendStripeStatus(int clientNumber, bool boToAllClients) {
