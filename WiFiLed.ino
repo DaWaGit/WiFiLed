@@ -40,7 +40,7 @@ void setup() {
     vPrintChipInfo();
     Serial.setDebugOutput(DEBUG_LEVEL & DEBUG_GLOBAL_OUTPUT ? true : false);
 
-    oEep.vInit();                       // download all EEP values
+    oEep.vInit(&oNtpTime);              // download all EEP values
     oLedStripe.vInit(&oEep, &oNtpTime); // init LED strip
     oButtons.vInit(&oLedStripe, &oEep, &oNtpTime); // init Buttons
 #if ENABLE_WLAN
@@ -49,7 +49,7 @@ void setup() {
     oNtpTime.vSetLedStripe(&oLedStripe);
 
     oNtpTime.vInit(
-        oEep.acTimZone,    // TimeZone see: https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
+        oEep.acTimeZone,   // TimeZone see: https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
         oEep.acNtpServer1, // NTP server 1 e.g. "ptbtime1.ptb.de"
         oEep.acNtpServer2, // NTP server 2 e.g. "ptbtime2.ptb.de"
         "ptbtime3.ptb.de", // NTP server 3 e.g. "ptbtime3.ptb.de"

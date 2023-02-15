@@ -25,7 +25,11 @@ void NtpTime::vSetLedStripe(class LedStripe *pNewLedStripe) {
 void NtpTime::vInit(char *timeZone, char *ntpServer1, char *ntpServer2, char *ntpServer3, double newLatitude, double newLongitude) {
     latitude  = newLatitude;
     longitude = newLongitude;
-    configTime(timeZone, ntpServer1, ntpServer2, ntpServer3); // by default, the NTP will be started after 60 secs
+    configTime(
+        timeZone, // see: https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
+        ntpServer1,
+        ntpServer2,
+        ntpServer3); // by default, the NTP will be started after 60 secs
 
     if (u8DebugLevel & DEBUG_TIME_EVENTS) {
         char buffer[300];
