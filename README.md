@@ -5,14 +5,25 @@ The following features are realized.
 
 * **browser control**<br>
   The device provides a webpage, where you can control the LED stripe (including simple animations).<br>
-  ![screenshot](doc/screenshot.png)
+  ![mainScreen](doc/mainScreen.png)
 * **smooth on/off**<br>
   The LEDs will be turned on and off smoothly via a PT1 damping
+* **rightness is dependent form sunrise & sunset**<br>
+  You can define two different brightnesses, one for sunrise and one for sunset.<br>
+  The brightness switches automatically when the sun rises or sets.<br>
+  ![ledSetup](doc/ledSetup.png)
+* **color animations**<br>
+  You can define simple color animations<br>
+  ![colorMode](doc/colorMode.png)
+* **sunrise & sunset calculation**<br>
+  You can configure NTP timing servers and your longitude and latitude, to calculate the sunrise and sunset.<br>
+  ![timeSetup](doc/timeSetup.png)
 * **optionally IR motion sensors**<br>
-  Connect optionally two IR motion sensors to activate the LEDs by motion detection.
-  After a defined time the LEDs will be durned off.
+  Connect optionally two IR motion sensors to activate the LEDs by motion detection.<br>
+  After a defined time the LEDs will be durned off.<br>
+  ![globalSetup](doc/globalSetup.png)
 * **optionally IR distance sensors**<br>
-  Connect optionally an IR distance sensor to control on/oof and the brightness.
+  Connect optionally an IR distance sensor to control on/oof and the brightness.<br>
   * fast moving across the distance sensor turns the LEDs on/off
   * static distance in front of the distance sensor changes the brightness
 
@@ -67,9 +78,9 @@ When you turn on as first time, follow the next steps, to connect the device in 
    | -------- | -------------------- |
    | SSID     | WiFiLed-\<DeviceId\> |
    | Password | none                 |
-   | Url      | http://192.168.1.4/  |
+   | Url      | http://192.168.4.1/  |
 
-1. Open in your browser the page http://192.168.1.4/
+1. Open in your browser the page http://192.168.4.1/
 1. In **WiFi Setup** add your WiFi SSID and password and press **Success**<br>
    ![wifiSetup](doc/wifiSetup.png)
 1. The device starts new, but with a fast blinking onboard LED to inform you, the connection to your WiFi is trying

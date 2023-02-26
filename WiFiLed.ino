@@ -5,15 +5,12 @@
 //  Doc      : https://github.com/DaWaGit/WiFiLed/blob/main/README.md
 // #############################################################################
 #define CLASS_NAME       "WiFiLed"
-#define ENABLE_WLAN      1
 
 #include "Eep.h"        // EEP interface
 #include "LedStripe.h"  // LED controll
 #include "Buttons.h"    // button handling
 #include "PT1.h"        // PT1 damping
-#if ENABLE_WLAN
-    #include "Wlan.h"   // WiFi Interface
-#endif
+#include "Wlan.h"   // WiFi Interface
 #include "Version.h"    // version definition
 #include "Utils.h"      // useful utils
 #include "DebugLevel.h" // debug level definiton
@@ -25,9 +22,7 @@
 Eep oEep(DEBUG_LEVEL);             // create the Eep object
 LedStripe oLedStripe(DEBUG_LEVEL); // create the LedStrip object
 Buttons oButtons(DEBUG_LEVEL);     // create the Button object
-#if ENABLE_WLAN
-    Wlan oWlan(DEBUG_LEVEL);       // create Wlan object
-#endif
+Wlan oWlan(DEBUG_LEVEL);       // create Wlan object
 NtpTime oNtpTime(DEBUG_LEVEL);     // create an NTP time object
 
 //=======================================================================
@@ -43,10 +38,9 @@ void setup() {
     oEep.vInit(&oNtpTime);              // download all EEP values
     oLedStripe.vInit(&oEep, &oNtpTime); // init LED strip
     oButtons.vInit(&oLedStripe, &oEep, &oNtpTime); // init Buttons
-#if ENABLE_WLAN
-    oWlan.vInit(&oButtons, &oLedStripe, &oEep, &oNtpTime); // init Wlan+Webserver
-#endif
+    WebServer *oWebServer = oWlan.vInit(&oButtons, &oLedStripe, &oEep, &oNtpTime); // init Wlan+Webserver
     oNtpTime.vSetLedStripe(&oLedStripe);
+    oNtpTime.vSetWebServer(oWebServer);
 
     oNtpTime.vInit(
         oEep.acTimeZone,   // TimeZone see: https://github.com/nayarsystems/posix_tz_db/blob/master/zones.csv
@@ -63,9 +57,7 @@ void setup() {
 void loop() {
     oButtons.vLoop();   // detect and handle Button events
     oLedStripe.vLoop(); // damp stripe changes
-#if ENABLE_WLAN
     oWlan.vLoop();      // check Wlan status, reconnect
-#endif
     oNtpTime.vLoop();
 }
 

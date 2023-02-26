@@ -124,15 +124,17 @@
         }
         $("#sun").detach().appendTo("#colorSelector");  // move icon to parent colorSelector
         $("#moon").detach().appendTo("#colorSelector"); // move icon to parent colorSelector
+        updateTime();
       }
       //#########################################
-      // select an element: color/wifi/...
+      // select an element: color/wifiSetup/...
       function selectElement(element) {
-        document.getElementById('color').style.display = element === 'color' ? 'block' : 'none';
-        document.getElementById('wifi').style.display  = element === 'wifi'  ? 'block' : 'none';
-        document.getElementById('time').style.display  = element === 'time'  ? 'block' : 'none';
-        document.getElementById('led').style.display   = element === 'led'   ? 'block' : 'none';
-        document.getElementById('setup').style.display = element === 'setup' ? 'block' : 'none';
+        document.getElementById('time').style.display        = element === 'time'        ? 'block' : 'none';
+        document.getElementById('colorSetup').style.display  = element === 'colorSetup'  ? 'block' : 'none';
+        document.getElementById('wifiSetup').style.display   = element === 'wifiSetup'   ? 'block' : 'none';
+        document.getElementById('timeSetup').style.display   = element === 'timeSetup'   ? 'block' : 'none';
+        document.getElementById('ledSetup').style.display    = element === 'ledSetup'    ? 'block' : 'none';
+        document.getElementById('globalSetup').style.display = element === 'globalSetup' ? 'block' : 'none';
       }
       //#########################################
       // Call this to connect to the WebSocket server
@@ -238,7 +240,7 @@
           return;
         }
         //-----------------------------
-        // enable/disable distance sensor
+        // configure time setup
         result = evt.data.match(/^TimeZoneName:(.*)TimeZone:(.*)NTPserver1:(.*)NTPserver2:(.*)Latitude:(([0-9]*[.])?[0-9]+)Longitude:(([0-9]*[.])?[0-9]+)$/i);
         if (result) {
           boSendToDevice = false;
@@ -262,25 +264,15 @@
           }
           return;
         }
-/*
         //-----------------------------
-        // new brightness
-        result = evt.data.match(/^setB:(\d+)bDay:(\d+)bNight(\d+)$/i);
+        // set dun data
+        result = evt.data.match(/^sunrise:(.*)sunset:(.*)$/i);
         if (result) {
           boSendToDevice = false;
-          $('#color-block').wheelColorPicker(
-            'setColor',
-            {
-              h: $('#color-block').wheelColorPicker('color').h,
-              s: $('#color-block').wheelColorPicker('color').s,
-              v: Number(result[1]) / 0xff
-            }
-          );
-          $("#bDay").prop('value', Number(result[2]));   // set day brightness
-          $("#bNight").prop('value', Number(result[3])); // set night brigntness
+          $("#sunrise").text(result[1]);
+          $("#sunset").text(result[2]);
           return;
         }
-*/
       }
       //#########################################
       // Called when a WebSocket error occurs
@@ -373,18 +365,43 @@
               <tr>
                 <td class="custom-select">
                   <select name="select" id="select" autocomplete="off">
-                    <option value="color" selected="selected">Color mode</option>
-                    <option value="wifi">WiFi setup</option>
-                    <option value="time">Time setup</option>
-                    <option value="led">LED setup</option>
-                    <option value="setup">Global Setup</option>
+                    <option value="time" selected="selected">Time</option>
+                    <option value="colorSetup">Color mode</option>
+                    <option value="wifiSetup">WiFi setup</option>
+                    <option value="timeSetup">Time setup</option>
+                    <option value="ledSetup">LED setup</option>
+                    <option value="globalSetup">Global Setup</option>
                   </select>
                 </td>
               </tr>
             </tbody>
           </table>
         </div>
-        <div id="color" class="config1 config2" style="display: inline-block;"">
+        <div id="time" class="config1 config2" style="display: inline-block;">
+          <table style="width:100%; height: 30px; border-collapse: collapse;">
+            <tbody>
+              <tr rowspan="2">
+                <td id="currentTime" class="custom-select" colspan="2" style="font-family:ui-monospace;font-size:447%;font-weight: bolder;text-align:center;"></td>
+              </tr>
+              <tr>
+                <td id="currentDate" class="value-name" colspan="2" style="text-align:center;"></td>
+              </tr>
+              <tr>
+                <td class="value-name"> </td>
+                <td class="value"> </td>
+              </tr>
+              <tr>
+                <td class="value-name" width="150px">Sunrise <img src="sun.svg" height="32px" style="vertical-align:middle; filter: invert(50%) sepia(50%) saturate(0%) hue-rotate(0deg) brightness(87%) contrast(156%);"/></td>
+                <td id="sunrise" class="value" style="text-align:left;"></td>
+              </tr>
+              <tr>
+                <td class="value-name">Sunset <img src="moon.svg" height="32px" style="vertical-align:middle; filter: invert(50%) sepia(50%) saturate(0%) hue-rotate(0deg) brightness(87%) contrast(156%);"/></td>
+                <td id="sunset" class="value" style="text-align:left;"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div id="colorSetup" class="config1 config2" style="display: inline-block;">
           <table style="width:100%; height: 30px; border-collapse: collapse;">
             <tbody>
               <tr>
@@ -418,7 +435,7 @@
             </tbody>
           </table>
         </div>
-        <div id="wifi" class="config1 config2" style="display: inline-block;"">
+        <div id="wifiSetup" class="config1 config2" style="display: inline-block;"">
           <table style=" width:100%; height:30px; border-collapse: collapse;">
             <tbody>
               <tr>
@@ -444,7 +461,7 @@
             </tbody>
           </table>
         </div>
-        <div id="time" class="config1 config2" style="display: inline-block;"">
+        <div id="timeSetup" class="config1 config2" style="display: inline-block;"">
           <table style=" width:100%; height:30px; border-collapse: collapse;">
             <tbody>
               <tr>
@@ -938,7 +955,7 @@
             </tbody>
           </table>
         </div>
-        <div id="led" class="config1 config2" style="display: inline-block;"">
+        <div id="ledSetup" class="config1 config2" style="display: inline-block;"">
           <table style=" width:100%; height:30px; border-collapse: collapse;">
             <tbody>
               <tr>
@@ -966,7 +983,7 @@
             </tbody>
           </table>
         </div>
-        <div id="setup" class="config1 config2" style="display: inline-block;"">
+        <div id="globalSetup" class="config1 config2" style="display: inline-block;"">
           <table style=" width:100%; height:30px; border-collapse: collapse;">
             <tbody>
               <tr>
@@ -1028,6 +1045,30 @@
           }
         });
       });
+
+      function updateTime() {
+        const today = new Date();
+        let h = today.getHours();
+        let m = today.getMinutes();
+        let s = today.getSeconds();
+        m = checkTime(m);
+        s = checkTime(s);
+        document.getElementById('currentTime').innerHTML = h + ":" + m + ":" + s;
+
+        var dd = String(today.getDate()).padStart(2, '0');
+        var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+        var yyyy = today.getFullYear();
+        const weekday = new Array('Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday');
+        document.getElementById('currentDate').innerHTML = weekday[today.getDay()]+' '+dd+'/'+mm+'/'+yyyy;
+
+        setTimeout(updateTime, 1000);
+      }
+
+      function checkTime(i) {
+        if (i < 10) { i = "0" + i };  // add zero in front of numbers < 10
+        return i;
+      }
+
     </script>
   </body>
 </html>

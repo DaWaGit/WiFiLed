@@ -1,11 +1,6 @@
-#define ENABLE_WEBSERVER 1
-
 #include "Wlan.h"
 #include "Utils.h"
 #include "DebugLevel.h"
-#if ENABLE_WEBSERVER
-    #include "WebServer.h"
-#endif
 
 #define CLASS_NAME              "Wlan"
 #define LED_BLINK_INTERVAL_SSID 100   // blink interval for WiFi SSI Mode [ms]
@@ -25,11 +20,9 @@ volatile bool boSsidConnected          = false;
 volatile bool boSSIDeverConnected      = false;
 WiFiEventHandler Wlan_GotIpEvent, Wlan_DisconnectedEvent;
 
-#if ENABLE_WEBSERVER
 class LedStripe *pLedStripe;
 class Buttons *pButtons;
 WebServer oWebServer(80, 1337); // create WebServer object
-#endif
 
 //=============================================================================
 Wlan::Wlan(uint8_t u8NewDebugLevel) {
@@ -42,7 +35,7 @@ IPAddress Wlan::localIP() {
 }
 
 //=============================================================================
-void Wlan::vInit(class Buttons *pNewButtons, class LedStripe *pNewLedStripe, class Eep *pNewEep, class NtpTime *pNewNtpTime) {
+class WebServer* Wlan::vInit(class Buttons *pNewButtons, class LedStripe *pNewLedStripe, class Eep *pNewEep, class NtpTime *pNewNtpTime) {
 
     pEep = pNewEep;
     pEep->vGetWifiSsid(acWifiSsid);
@@ -50,11 +43,8 @@ void Wlan::vInit(class Buttons *pNewButtons, class LedStripe *pNewLedStripe, cla
 
     pButtons = pNewButtons;
 
-#if ENABLE_WEBSERVER
-        pLedStripe = pNewLedStripe;
-        oWebServer.vInit(pButtons, pLedStripe, pEep, pNewNtpTime, u8WiFiDebugLevel); // init WebServer
-        //pNewNtpTime->vSetWebServer(&oWebServer);
-#endif
+    pLedStripe = pNewLedStripe;
+    oWebServer.vInit(pButtons, pLedStripe, pEep, pNewNtpTime, u8WiFiDebugLevel); // init WebServer
 
     pinMode(LED_BUILTIN, OUTPUT); // use build in LED to show the WiFi status
     ulWiFiLastBlinkInterval = millis();
@@ -78,6 +68,7 @@ void Wlan::vInit(class Buttons *pNewButtons, class LedStripe *pNewLedStripe, cla
         // start WiFi AP mode
         vInitWiFiMode(true);
     }
+    return &oWebServer;
 }
 
 //=============================================================================
@@ -101,11 +92,10 @@ void Wlan::vInitWiFiMode(bool boNewApMode) {
         //Serial.printf("[%s::%s] BroadcastIP: ", CLASS_NAME, "AccessPoint"); Serial.println(WiFi.softAPBroadcastIP());   // get the AP IPv4 broadcast address.
         //Serial.printf("[%s::%s] NetworkID  : ", CLASS_NAME, "AccessPoint"); Serial.println(WiFi.softAPNetworkID());     // network ID.
         //Serial.printf("[%s::%s] SubnetCIDR : ", CLASS_NAME, "AccessPoint"); Serial.println(WiFi.softAPSubnetCIDR());    // subnet CIDR.
-#if ENABLE_WEBSERVER
+
         oWebServer.vSetIp(WiFi.softAPIP()); // send IP to WebServer
         pLedStripe->vSetWebServer(&oWebServer);
         pButtons->vSetWebServer(&oWebServer);
-#endif
     } else {
         // connect to SSID
         WiFi.persistent(false);      // do not store network config in flash
@@ -136,11 +126,9 @@ void Wlan::vInitWiFiMode(bool boNewApMode) {
                 Serial.printf("[%s::%s] AutoCon.  : ", CLASS_NAME, "onStationModeGotIP"); Serial.println(WiFi.getAutoConnect()       ? "enabled" : "disabled"); // automatically connect to last used access point on power on
                 Serial.printf("[%s::%s] AutoRecon.: ", CLASS_NAME, "onStationModeGotIP"); Serial.println(WiFi.setAutoReconnect(true) ? "enabled" : "disabled"); // reconnect to an access point in case it is disconnected
             }
-#if ENABLE_WEBSERVER
             oWebServer.vSetIp(WiFi.localIP()); // send IP to WebServer
             pLedStripe->vSetWebServer(&oWebServer);
             pButtons->vSetWebServer(&oWebServer);
-#endif
         });
 
         //.........................................................................
@@ -176,9 +164,7 @@ void Wlan::vLoop(){
 
     if (boApMode) {
         // AP mode active
-#if ENABLE_WEBSERVER
         oWebServer.vLoop(); // loop to handle WebSocket data
-#endif
         // SSID not connected
         if ((millis() - ulWiFiLastBlinkInterval) > LED_BLINK_INTERVAL_AP) {
             // status LED blink every 200ms
@@ -190,9 +176,7 @@ void Wlan::vLoop(){
         // SSID mode active
         if (boSsidConnected) {
             // WLAN connected
-#if ENABLE_WEBSERVER
             oWebServer.vLoop(); // loop to handle WebSocket data
-#endif
         } else {
             // SSID not connected
             if ((millis() - ulWiFiLastBlinkInterval) > LED_BLINK_INTERVAL_SSID) {

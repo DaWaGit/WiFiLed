@@ -431,7 +431,7 @@ void WebServer::vSendColorMode(int clientNumber, bool boToAllClients) {
 }
 
 //=======================================================================
-// send the current color mode to all active clients
+// send the current time setup to all active clients
 void WebServer::vSendTimeSetup(int clientNumber, bool boToAllClients) {
     char msg_buf[250];
 
@@ -443,6 +443,26 @@ void WebServer::vSendTimeSetup(int clientNumber, bool boToAllClients) {
             pEep->acNtpServer2,
             pEep->dLatitude,
             pEep->dLongitude);
+    if (boToAllClients) {
+        // send to all clients expect the selected one
+        vSendBufferToAllClients(msg_buf, clientNumber);
+    } else {
+        // send only to the selected client
+        vSendBufferToOneClient(msg_buf, clientNumber);
+    }
+}
+
+//=======================================================================
+// send the current sun data to all active clients
+void WebServer::vSendSunData(int clientNumber, bool boToAllClients) {
+    char msg_buf[250];
+
+    // get the current stripe status
+    sprintf(msg_buf, "sunrise:%02d:%02dsunset:%02d:%02d",
+            pNtpTime->stSunRise.u8Hour,
+            pNtpTime->stSunRise.u8Minute,
+            pNtpTime->stSunSet.u8Hour,
+            pNtpTime->stSunSet.u8Minute);
     if (boToAllClients) {
         // send to all clients expect the selected one
         vSendBufferToAllClients(msg_buf, clientNumber);
@@ -508,4 +528,5 @@ void WebServer::vSendInitValues(int clientNumber, bool boToAllClients) {
     vSendDistanceSensorEnabled(clientNumber, boToAllClients); // update sensor usage for every client
     vSendMotionSensorEnabled(clientNumber, boToAllClients);   // update sensor usage for every client
     vSendTimeSetup(clientNumber, boToAllClients);             // update time setup for every client
+    vSendSunData(clientNumber, boToAllClients);               // update sun data for every client
 }

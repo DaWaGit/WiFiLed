@@ -26,14 +26,14 @@ class NtpTime {
         NtpTime(uint8_t u8NewDebugLevel);                           // constructor
         void vInit(char *, char *, char *, char *, double, double); // initialize the NTP server and set your location
         void vLoop();                                               // call thi in the main loop to refresh the stLocal, SunRise, SunSet automatically
-        //void vSetWebServer(class WebServer *);
         void vSetLedStripe(class LedStripe *);
+        void vSetWebServer(class WebServer *);
         tstLocalTime stLocal; // local time
         tstSunTime stSunRise; // time SunRise
         tstSunTime stSunSet;  // time SunSet
 
     private:
-        //class WebServer *pWebServer;
+        class WebServer *pWebServer;
         class LedStripe *pLedStripe;
         double dJulianDate(int, int, int);
         double dInPi(double);

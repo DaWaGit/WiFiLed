@@ -29,11 +29,11 @@ class WebServer {
         void vSetIp(IPAddress);
         void vLoop();
         void vSendStripeStatus(int, bool);
+        void vSendSunData(int, bool);
 
     private:
         void vWebSocketEvent(uint8_t, WStype_t, uint8_t *, size_t);
         void vSendColorMode(int, bool);
-//        void vSendBrightness(int, bool);
         void vSendDistanceSensorEnabled(int, bool);
         void vSendMotionSensorEnabled(int, bool);
         void vSendTimeSetup(int, bool);

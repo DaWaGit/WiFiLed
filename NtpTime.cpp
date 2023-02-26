@@ -10,12 +10,12 @@
 NtpTime::NtpTime(uint8_t u8NewDebugLevel) {
     u8DebugLevel = u8NewDebugLevel; // store debug level
 }
-/*
+
 //=============================================================================
 void NtpTime::vSetWebServer(class WebServer *pNewWebServer) {
     pWebServer = pNewWebServer;
 }
-*/
+
 //=============================================================================
 void NtpTime::vSetLedStripe(class LedStripe *pNewLedStripe) {
     pLedStripe = pNewLedStripe;
@@ -79,6 +79,7 @@ void NtpTime::vLoop() {
 
             u16SunRise = ((uint16_t)stSunRise.u8Hour * (uint16_t)100) + (uint16_t)stSunRise.u8Minute;
             u16SunSet  = ((uint16_t)stSunSet.u8Hour  * (uint16_t)100) + (uint16_t)stSunSet.u8Minute;
+            pWebServer->vSendSunData(-1, true);
         }
 
         stLocal.u8Hour   = tm.tm_hour;
