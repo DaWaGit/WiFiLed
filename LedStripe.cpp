@@ -38,6 +38,10 @@ void LedStripe::vInit(class Eep *pNewEep, class NtpTime *pNewNtpTime) {
         sprintf(buffer, "%s Bri:0x%02x", buffer, u8GetBrightness());
         vConsole( u8DebugLevel, DEBUG_LED_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
     }
+    if (pEep->u8PowerOnRestoreSwitch) {
+        // activate last switch status
+        vTurn(pEep->u8SwitchStatus, false);
+    }
 }
 
 //=============================================================================
@@ -97,6 +101,10 @@ void LedStripe::vTurn( bool boNewMode, bool boFast) {
         pEep->vSetBrightnessNight(pEep->u8BrightnessNight, true);
     } else {
         boInitRandomHue = true;
+    }
+    if (pEep->u8PowerOnRestoreSwitch) {
+        // store switch status in EEP
+        pEep->vSetSwitchStatus(boNewMode, true);
     }
 
     if (boFast) {

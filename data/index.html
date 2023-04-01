@@ -227,6 +227,18 @@
         }
         //-----------------------------
         // enable/disable distance sensor
+        result = evt.data.match(/^restore:(\d+)$/i);
+        if (result) {
+          boSendToDevice = false;
+          if (Number(result[1])) {
+            $("#RestoreSwitch").prop('checked', true);
+          } else {
+            $("#RestoreSwitch").prop('checked', false);
+          }
+          return;
+        }
+        //-----------------------------
+        // enable/disable distance sensor
         result = evt.data.match(/^mSens:(\d+)$/i);
         if (result) {
           boSendToDevice = false;
@@ -301,6 +313,14 @@
         } else {
           doSend("dSens:0");
           document.getElementById('calibrationBtn').disabled = true;
+        }
+      }
+      //#########################################
+      function toggleRestore() {
+        if ($("#RestoreSwitch").is(':checked')) {
+          doSend("restore:1");
+        } else {
+          doSend("restore:0");
         }
       }
       //#########################################
@@ -1003,7 +1023,8 @@
                 <td class="value"><button id="calibrationBtn" class="btn" onmousedown='doSend("calib:1");' onmouseup='doSend("calib:0");'>calibrate</button></td>
               </tr>
               <tr>
-                <td class="value-name">&nbsp;</td><td class="value">&nbsp;</td>
+                <td class="value-name" width="200px">restore after PwrOn</td>
+                <td class="value"><label class="switch"><input id="RestoreSwitch" type="checkbox" onChange="toggleRestore()"><span class="slider round"></span></label></td>
               </tr>
               <tr>
                 <td class="value-name">factory reset</td>

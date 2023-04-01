@@ -33,8 +33,10 @@ class Eep {
         void vSetLongitude(double , bool);             // store longitude
         void vSetLatitude(double, bool);               // store latitude
         void vSetNtp(char *, char *, char *, char *, bool); // store NTP TimeZone, NTP Server1, NTP Server2
+        void vSetSwitchStatus(uint8_t, bool);          // store switch status
+        void vSetPowerOnRestoreSwitch(uint8_t, bool);  // store mode for "restore switch status after PowerOnReset"
 
-        uint16_t u16LedCount;              // number of current configured LEDs (0..65535 default:300)
+        uint16_t u16LedCount;          // number of current configured LEDs (0..65535 default:300)
         uint16_t u16CalibrationValue;      // distance sensor calibration value (0..65535 default:200)
         uint16_t u16Hue;                   // color hue (0..65535 default:0)
         uint8_t u8Saturation;              // color saturation value (0..65535 default:0)
@@ -49,6 +51,8 @@ class Eep {
         uint8_t u8MotionOffDelay;          // turn off delay [s] (1..255 default:60)
         uint8_t u8DistanceSensorEnabled;   // enable/disable distance sensor (0..255 default:0)
         uint8_t u8MotionSensorEnabled;     // enable/disable motion sensor (0..255 default:1)
+        uint8_t u8SwitchStatus;            // switch status (0..1 default:0)
+        uint8_t u8PowerOnRestoreSwitch;    // restore switch status after PowerOn (0..1 default:0)
         char acTimeZone[EepStringSize];    // NTP Time Zone String
         char acTimeZoneName[EepStringSize];// NTP Time Zone Name string
         char acNtpServer1[EepStringSize];  // NTP server1

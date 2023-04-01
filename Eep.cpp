@@ -24,15 +24,16 @@
 #define EepAdr_u8DistanceSensorEnabled (EepAdr_u8MotionOffDelay + sizeof(uint8_t))
 #define EepAdr_u8MotionSensorEnabled   (EepAdr_u8DistanceSensorEnabled + sizeof(uint8_t))
 #define EepAdr_u8BrightnessNight     (EepAdr_u8MotionSensorEnabled + sizeof(uint8_t))
-
 #define EepAdr_dLongitude             (EepAdr_u8BrightnessNight + sizeof(uint8_t))
 #define EepAdr_dLatitude              (EepAdr_dLongitude + sizeof(double))
-#define EepAdr_acTimeZone             (EepAdr_dLatitude + EepStringSize)
+#define EepAdr_acTimeZone             (EepAdr_dLatitude + sizeof(double))
 #define EepAdr_acNtpServer1           (EepAdr_acTimeZone + EepStringSize)
 #define EepAdr_acNtpServer2           (EepAdr_acNtpServer1 + EepStringSize)
 #define EepAdr_acTimeZoneName         (EepAdr_acNtpServer2 + EepStringSize)
+#define EepAdr_u8SwitchStatus         (EepAdr_acTimeZoneName + EepStringSize)
+#define EepAdr_u8PowerOnRestoreSwitch (EepAdr_u8SwitchStatus + sizeof(uint8_t))
 
-#define EepAdr_Last                   (EepAdr_acTimeZoneName + EepStringSize)
+#define EepAdr_Last                   (EepAdr_acTimeZoneName + sizeof(uint8_t))
 
 //=======================================================================
 Eep::Eep(uint8_t u8NewDebugLevel) {
@@ -63,8 +64,7 @@ void Eep::vInit(class NtpTime *pNewNtpTime) {
     EEPROM.get(EepAdr_u8BrightnessMax, u8BrightnessMax);
     EEPROM.get(EepAdr_u8DimMode, u8DimMode);
     EEPROM.get(EepAdr_u8WiFiApMode, u8WiFiApMode);
-    EEPROM.get(EepAdr_u8ColorMode, u8ColorMode);
-    u8ColorMode = (u8ColorMode >= nNoMode) ? nNoMode - 1 : u8ColorMode;
+    EEPROM.get(EepAdr_u8ColorMode, u8ColorMode); u8ColorMode = (u8ColorMode >= nNoMode) ? nNoMode - 1 : u8ColorMode;
     EEPROM.get(EepAdr_u8Speed, u8Speed);
     EEPROM.get(EepAdr_u8MotionOffDelay, u8MotionOffDelay);
     EEPROM.get(EepAdr_u8DistanceSensorEnabled, u8DistanceSensorEnabled);
@@ -75,53 +75,35 @@ void Eep::vInit(class NtpTime *pNewNtpTime) {
     EEPROM.get(EepAdr_acTimeZone, acTimeZone); acTimeZone[EepStringSize - 1] = 0;
     EEPROM.get(EepAdr_acNtpServer1, acNtpServer1); acNtpServer1[EepStringSize - 1] = 0;
     EEPROM.get(EepAdr_acNtpServer2, acNtpServer2); acNtpServer2[EepStringSize - 1] = 0;
+    EEPROM.get(EepAdr_u8SwitchStatus, u8SwitchStatus);
+    EEPROM.get(EepAdr_u8PowerOnRestoreSwitch, u8PowerOnRestoreSwitch);
 
     if (u8DebugLevel & DEBUG_EEP_EVENTS) {
         char buffer[100];
-        sprintf(buffer, "Eep.Read Adr:0x%04X u32ChipId               = 0x%08X ", EepAdr_ChipId, u32ChipId);
-        vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X u16CalibrationValue     = %d ", EepAdr_u16CalibrationValue, u16CalibrationValue);
-        vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X u16LedCount             = %d ", EepAdr_u16LedCount, u16LedCount);
-        vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X u16Hue                  = 0x%04X ", EepAdr_u16Hue, u16Hue);
-        vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X u8Saturation            = 0x%02X ", EepAdr_u8Saturation, u8Saturation);
-        vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X u8BrightnessDay         = 0x%02X ", EepAdr_u8BrightnessDay, u8BrightnessDay);
-        vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X u8BrightnessNight       = 0x%02X ", EepAdr_u8BrightnessNight, u8BrightnessNight);
-        vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X u8BrightnessMin         = %d ", EepAdr_u8BrightnessMin, u8BrightnessMin);
-        vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X u8BrightnessMax         = %d ", EepAdr_u8BrightnessMax, u8BrightnessMax);
-        vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X u8DimMode               = 0x%02X ", EepAdr_u8DimMode, u8DimMode);
-        vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X u8WiFiApMode            = 0x%02X ", EepAdr_u8WiFiApMode, u8WiFiApMode);
-        vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X u8ColorMode             = %d ", EepAdr_u8ColorMode, u8ColorMode);
-        vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X u8Speed                 = %d ", EepAdr_u8Speed, u8Speed);
-        vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X u8MotionOffDelay        = %d [s]", EepAdr_u8MotionOffDelay, u8MotionOffDelay);
-        vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X u8DistanceSensorEnabled = %d", EepAdr_u8DistanceSensorEnabled, u8DistanceSensorEnabled);
-        vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X u8MotionSensorEnabled   = %d", EepAdr_u8MotionSensorEnabled, u8MotionSensorEnabled);
-        vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X dLongitude              = %f", EepAdr_dLongitude, dLongitude);
-        vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X dLatitude               = %f", EepAdr_dLatitude, dLatitude);
-        vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X acTimeZoneName          = %s", EepAdr_acTimeZoneName, acTimeZoneName);
-        vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X acTimeZone              = %s", EepAdr_acTimeZone, acTimeZone);
-        vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X acNtpServer1            = %s", EepAdr_acNtpServer1, acNtpServer1);
-        vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
-        sprintf(buffer, "Eep.Read Adr:0x%04X acNtpServer2            = %s", EepAdr_acNtpServer2, acNtpServer2);
-        vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u32ChipId               = 0x%08X ", EepAdr_ChipId, u32ChipId); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u16CalibrationValue     = %d ", EepAdr_u16CalibrationValue, u16CalibrationValue); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u16LedCount             = %d ", EepAdr_u16LedCount, u16LedCount); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u16Hue                  = 0x%04X ", EepAdr_u16Hue, u16Hue); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u8Saturation            = 0x%02X ", EepAdr_u8Saturation, u8Saturation); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u8BrightnessDay         = 0x%02X ", EepAdr_u8BrightnessDay, u8BrightnessDay); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u8BrightnessNight       = 0x%02X ", EepAdr_u8BrightnessNight, u8BrightnessNight); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u8BrightnessMin         = %d ", EepAdr_u8BrightnessMin, u8BrightnessMin); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u8BrightnessMax         = %d ", EepAdr_u8BrightnessMax, u8BrightnessMax); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u8DimMode               = 0x%02X ", EepAdr_u8DimMode, u8DimMode); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u8WiFiApMode            = 0x%02X ", EepAdr_u8WiFiApMode, u8WiFiApMode); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u8ColorMode             = %d ", EepAdr_u8ColorMode, u8ColorMode); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u8Speed                 = %d ", EepAdr_u8Speed, u8Speed); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u8MotionOffDelay        = %d [s]", EepAdr_u8MotionOffDelay, u8MotionOffDelay); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u8DistanceSensorEnabled = %d", EepAdr_u8DistanceSensorEnabled, u8DistanceSensorEnabled); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u8MotionSensorEnabled   = %d", EepAdr_u8MotionSensorEnabled, u8MotionSensorEnabled); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X dLongitude              = %f", EepAdr_dLongitude, dLongitude); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X dLatitude               = %f", EepAdr_dLatitude, dLatitude); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X acTimeZoneName          = %s", EepAdr_acTimeZoneName, acTimeZoneName); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X acTimeZone              = %s", EepAdr_acTimeZone, acTimeZone); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X acNtpServer1            = %s", EepAdr_acNtpServer1, acNtpServer1); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X acNtpServer2            = %s", EepAdr_acNtpServer2, acNtpServer2); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u8SwitchStatus          = %d ", EepAdr_u8SwitchStatus, u8SwitchStatus); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Read Adr:0x%04X u8PowerOnRestoreSwitch  = %d ", EepAdr_u8PowerOnRestoreSwitch, u8PowerOnRestoreSwitch); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
     }
 }
 //=======================================================================
@@ -159,6 +141,8 @@ void Eep::vFactoryReset() {
         "ptbtime2.ptb.de",
         false
     );
+    vSetSwitchStatus(0, false); // last switch status (0..1 default:0)
+    vSetPowerOnRestoreSwitch(0, false); // restore switch status after PowerOn (0..1 default:0)
 
     if (u8DebugLevel & DEBUG_EEP_EVENTS) {
         char buffer[100];
@@ -186,6 +170,8 @@ void Eep::vFactoryReset() {
         sprintf(buffer, "Eep.Write Adr:0x%04X acTimeZone              = %s", EepAdr_acTimeZone, acTimeZone); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
         sprintf(buffer, "Eep.Write Adr:0x%04X acNtpServer1            = %s", EepAdr_acNtpServer1, acNtpServer1); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
         sprintf(buffer, "Eep.Write Adr:0x%04X acNtpServer2            = %s", EepAdr_acNtpServer2, acNtpServer2); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Write Adr:0x%04X u8SwitchStatus          = 0x%02X ", EepAdr_u8SwitchStatus, u8SwitchStatus); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+        sprintf(buffer, "Eep.Write Adr:0x%04X u8PowerOnRestoreSwitch  = 0x%02X ", EepAdr_u8PowerOnRestoreSwitch, u8PowerOnRestoreSwitch); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
     }
     ESP.restart(); // reset
 }
@@ -552,4 +538,38 @@ void Eep::vSetNtp(char *pNewTimeZoneName, char *pNewTimeZone, char *newNtpServer
         dLatitude,         // latitude
         dLongitude         // longitude
     );
+}
+//=======================================================================
+void Eep::vSetSwitchStatus(uint8_t u8NewSwitchStatus, bool boPrintConsole) {
+    uint8_t u8SwitchStatus_Tmp = 0;
+    bool boUpdated              = false;
+    u8SwitchStatus = u8NewSwitchStatus;
+    EEPROM.get(EepAdr_u8SwitchStatus, u8SwitchStatus_Tmp);
+    if (u8SwitchStatus_Tmp != u8SwitchStatus) {
+        // at least one value changed
+        EEPROM.put(EepAdr_u8SwitchStatus, u8SwitchStatus);
+        EEPROM.commit();
+        boUpdated = true;
+    }
+    if (u8DebugLevel & DEBUG_EEP_EVENTS && boPrintConsole) {
+        char buffer[100];
+        sprintf(buffer, "Eep.Write Adr:0x%04X %s u8SwitchStatus = 0x%02X ", EepAdr_u8SwitchStatus, boUpdated ? "updated" : "unchanged", u8SwitchStatus); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+    }
+}
+//=======================================================================
+void Eep::vSetPowerOnRestoreSwitch(uint8_t u8NewPowerOnRestoreSwitch, bool boPrintConsole) {
+    uint8_t u8PowerOnRestoreSwitch_Tmp = 0;
+    bool boUpdated                     = false;
+    u8PowerOnRestoreSwitch = u8NewPowerOnRestoreSwitch;
+    EEPROM.get(EepAdr_u8PowerOnRestoreSwitch, u8PowerOnRestoreSwitch_Tmp);
+    if (u8PowerOnRestoreSwitch_Tmp != u8PowerOnRestoreSwitch) {
+        // at least one value changed
+        EEPROM.put(EepAdr_u8PowerOnRestoreSwitch, u8PowerOnRestoreSwitch);
+        EEPROM.commit();
+        boUpdated = true;
+    }
+    if (u8DebugLevel & DEBUG_EEP_EVENTS && boPrintConsole) {
+        char buffer[100];
+        sprintf(buffer, "Eep.Write Adr:0x%04X %s u8PowerOnRestoreSwitch = 0x%02X ", EepAdr_u8PowerOnRestoreSwitch, boUpdated ? "updated" : "unchanged", u8PowerOnRestoreSwitch); vConsole(u8DebugLevel, DEBUG_EEP_EVENTS, CLASS_NAME, __FUNCTION__, buffer);
+    }
 }

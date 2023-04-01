@@ -274,6 +274,13 @@ void WebServer::vWebSocketEvent(uint8_t clientNumber,
                 int end         = sPayload.length();
                 pEep->vSetDistanceSensorEnabled((uint8_t)(sPayload.substring(start, end).toInt()), true);
                 vSendDistanceSensorEnabled(clientNumber, true);
+            } else if (strstr((char *)payload, "restore")) {
+                // speed changed via web page
+                String sPayload = String((char *)payload);
+                int start       = sPayload.indexOf("restore:") + 8;
+                int end         = sPayload.length();
+                pEep->vSetPowerOnRestoreSwitch((uint8_t)(sPayload.substring(start, end).toInt()), true);
+                vSendPowerOnRestoreSwitch(clientNumber, true);
             } else if (strstr((char *)payload, "mSens")) {
                 // speed changed via web page
                 String sPayload = String((char *)payload);
@@ -386,6 +393,23 @@ void WebServer::vSendDistanceSensorEnabled(int clientNumber, bool boToAllClients
     // get the current stripe status
     sprintf(msg_buf, "dSens:%d",
             pEep->u8DistanceSensorEnabled);
+    if (boToAllClients) {
+        // send to all clients expect the selected one
+        vSendBufferToAllClients(msg_buf, clientNumber);
+    } else {
+        // send only to the selected client
+        vSendBufferToOneClient(msg_buf, clientNumber);
+    }
+}
+
+//=======================================================================
+// send the current u8PowerOnRestoreSwitch mode to all active clients
+void WebServer::vSendPowerOnRestoreSwitch(int clientNumber, bool boToAllClients) {
+    char msg_buf[100];
+
+    // get the current stripe status
+    sprintf(msg_buf, "restore:%d",
+            pEep->u8PowerOnRestoreSwitch);
     if (boToAllClients) {
         // send to all clients expect the selected one
         vSendBufferToAllClients(msg_buf, clientNumber);
@@ -529,4 +553,5 @@ void WebServer::vSendInitValues(int clientNumber, bool boToAllClients) {
     vSendMotionSensorEnabled(clientNumber, boToAllClients);   // update sensor usage for every client
     vSendTimeSetup(clientNumber, boToAllClients);             // update time setup for every client
     vSendSunData(clientNumber, boToAllClients);               // update sun data for every client
+    vSendPowerOnRestoreSwitch(clientNumber, boToAllClients);  // update PowerOnRestoreSwitch for every client
 }

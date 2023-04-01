@@ -40,6 +40,8 @@ class WebServer {
         void vSendBufferToAllClients(char *, int);
         void vSendBufferToOneClient(char *, int);
         void vSendInitValues(int , bool);
+        void vSendPowerOnRestoreSwitch(int, bool);
+
         class Eep *pEep;
         class LedStripe *pLedStripe;
         class Buttons *pButtons;
