@@ -60,7 +60,7 @@ class WebServer* Wlan::vInit(class Buttons *pNewButtons, class LedStripe *pNewLe
     }
 
     // start WiFi
-    if ((iSSIDlength > 0) && (!pEep->u8WiFiMode)) {
+    if ((iSSIDlength > 0) && (!pEep->u8WiFiApMode)) {
         // start WiFi SSID mode
         ulSSIDinitLinkTimeout = millis();
         vInitWiFiMode(false);
@@ -108,7 +108,7 @@ void Wlan::vInitWiFiMode(bool boNewApMode) {
         Wlan_GotIpEvent = WiFi.onStationModeGotIP([](const WiFiEventStationModeGotIP &event) {
             boSsidConnected     = true;
             boSSIDeverConnected = true;
-            digitalWrite(LED_BUILTIN, !boSsidConnected);
+            digitalWrite(LED_BUILTIN, boSsidConnected);
             pEep->vSetWiFiMode(0, true); // after Reset start SSID mode
             if (u8WiFiDebugLevel & DEBUG_WLAN_EVENTS) {
                 Serial.printf("[%s::%s] Status    : ", CLASS_NAME, "onStationModeGotIP"); Serial.println("connected");
@@ -190,7 +190,7 @@ void Wlan::vLoop(){
                 if ((millis() - ulSSIDinitLinkTimeout) > CONNECTION_TIMEOUT_SSID) {
                     // start WiFi AP mode
                     pEep->vSetWiFiMode(1, true); // after Reset start AP mode
-                    ESP.restart();         // reset
+                    ESP.restart();               // reset
                 }
             }
         }
