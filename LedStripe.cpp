@@ -73,7 +73,7 @@ void LedStripe::vSetColor(uint8_t clientNumber){
                 vSetRainbow(pEep->u16Hue, pEep->u8Saturation, u8GetBrightness(), pEep->u8Speed);
                 break;
             case nRandom: // change for each pixel color individually, but smooth
-                vSetRandom(pEep->u8Saturation, u8GetBrightness(), true, pEep->u8Speed);
+                vSetRandom(pEep->u8Saturation, u8GetBrightness(), false, pEep->u8Speed);
                 break;
             case nMovingPoint: // change for each pixel color individually, but smooth
                 vSetMovingPoint(pEep->u16Hue, pEep->u8Saturation, u8GetBrightness(), false);
@@ -280,9 +280,9 @@ void LedStripe::vSetRandom(
             aHue[u16LedIdx] = random(0x0000, 0xffff);
         } else if (u8Speed) {
             if (u16LedIdx & 0x0001) {
-                aHue[u16LedIdx] += u8Speed;
+                aHue[u16LedIdx] += random(0,u8Speed);
             } else {
-                aHue[u16LedIdx] -= u8Speed;
+                aHue[u16LedIdx] -= random(0, u8Speed);
             }
         }
         strip->SetPixelColor( // see: https://github.com/Makuna/NeoPixelBus/wiki/NeoPixelBus-object-API#void-setpixelcoloruint16_t-indexpixel-colorobject-color
