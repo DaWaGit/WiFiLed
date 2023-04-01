@@ -98,6 +98,7 @@
       }
     </style>
     <script type="text/javascript">
+      var verboseLevel = 1 // 0..2: select a verbose level
       var url = "`wsUrl`";
       var boSendToDevice = true;
       var hue = 0;
@@ -139,7 +140,7 @@
       //#########################################
       // Call this to connect to the WebSocket server
       function wsConnect(url) {
-        console.log("[WebSocket] Try a connection to " + url);
+        if (verboseLevel) { console.log("[WebSocket] Try a connection to " + url); }
         // Connect to WebSocket server
         websocket = new WebSocket(url);
         // Assign callbacks
@@ -152,7 +153,7 @@
       // Called when a WebSocket connection is established with the server
       function onOpen(evt) {
         // Log connection state
-        console.log("[WebSocket] Connected");
+        if (verboseLevel) { console.log("[WebSocket] Connected"); }
         // clear timeout timer
         clearInterval(reconnectTimer);
       }
@@ -160,7 +161,7 @@
       // Called when the WebSocket connection is closed
       function onClose(evt) {
         // Log disconnection state
-        console.log("[WebSocket] Disconnected");
+        if (verboseLevel) { console.log("[WebSocket] Disconnected"); }
         // try to reconnect after a few seconds
         reconnectTimer = setTimeout(function () { wsConnect(url) }, 1000);
       }
@@ -168,7 +169,7 @@
       // Called when a message is received from the server
       function onMessage(evt) {
         // Print out our received message
-        console.log("[WebSocket] Rx: " + evt.data);
+        if (verboseLevel>1) { console.log("[WebSocket] Rx: " + evt.data); }
         //-----------------------------
         // new color
         var result = evt.data.match(/^sw:(\d+)h:(\d+)s:(\d+)b:(\d+)bDay:(\d+)bNight:(\d+)Day:(\d+)$/i);
@@ -289,12 +290,12 @@
       //#########################################
       // Called when a WebSocket error occurs
       function onError(evt) {
-        console.log("[WebSocket] Error: " + evt.data);
+        if (verboseLevel) { console.log("[WebSocket] Error: " + evt.data); }
       }
       //#########################################
       // Sends a message to the server (and prints it to the console)
       function doSend(message) {
-        console.log("[WebSocket] Tx: " + message);
+        if (verboseLevel>1) { console.log("[WebSocket] Tx: " + message); }
         if (typeof websocket != "undefined") { websocket.send(message); }
       }
       //#########################################
