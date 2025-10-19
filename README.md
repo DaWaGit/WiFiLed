@@ -49,18 +49,13 @@ The following main devices are used in the schema:
 ----
 ## Compile & Flash
 
-1. open **WiFiLed.ino** in [Arduino IDE](https://www.arduino.cc/en/software)
-1. select board **LOLIN(WEMOS) D1 R2 & mini**
-1. install the following libraries:
-
-    * [NeoPixelBus](https://github.com/Makuna/NeoPixelBus)
-    * [WebSockets](https://www.arduinolibraries.info/libraries/web-sockets)
-    * [WiFi](https://www.arduinolibraries.info/libraries/wi-fi)
+1. open project root in your VSCode editor
 1. connect device **Wemos D1 mini** via USB
-1. configured the connected COM port in [Arduino IDE](https://www.arduino.cc/en/software) (menue: tools/port)
-1. upload ESP8266 Sketch Data (menue: tools/ESP8266 Sketch Data Upload)
-1. compile an link the code via [Arduino IDE](https://www.arduino.cc/en/software)
-2. upload the code via [Arduino IDE](https://www.arduino.cc/en/software)
+1. configured the connected COM port in `./platformio.ini`
+1. open your PlatformIo VSCode plugin
+1. select in **PlatformIo / d1_mini / Platform / Upload Filesystem Image** to upload the Sketch data stored in `./data/`
+1. select in **PlatformIo / d1_mini / General / Build** to build the system
+1. select in **PlatformIo / d1_mini / General / Upload and Monitor** to upload the code and start the serial monito to see the debug output
 
 ## Debug output
 This project sends a lot of debug information via the serial interface. These data will be sent with **115200 baud**.<br>
